@@ -1,0 +1,198 @@
+// SpeakMate AI 数据模型（对应 PRD 第 7.2 节）
+// 连接串只从环境变量 DATABASE_URL 读取，禁止硬编码。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PracticeMode {
+  general
+  exam
+}
+
+enum PracticeStatus {
+  in_progress
+  completed
+  failed
+}
+
+enum MessageRole {
+  user
+  assistant
+}
+
+enum ReviewStatus {
+  pending
+  mastered
+  later
+}
+
+/// 用户资料
+model Profile {
+  id                        String   @id @default(uuid()) @db.Uuid
+  displayName               String?  @map("display_name")
+  englishLevel              String?  @map("english_level")
+  learningGoal              String?  @map("learning_goal")
+  preferredFeedbackLanguage String?  @map("preferred_feedback_language")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  practiceSessions   PracticeSession[]
+  conversationMessages ConversationMessage[]
+  languageFeedback   LanguageFeedback[]
+  sessionSummaries   SessionSummary[]
+  learningProfile    LearningProfile?
+  skillMetrics       SkillMetric[]
+  reviewItems        ReviewItem[]
+
+  @@map("profiles")
+}
+
+/// 练习会话
+model PracticeSession {
+  id               String          @id @default(uuid()) @db.Uuid
+  userId           String          @map("user_id") @db.Uuid
+  mode             PracticeMode
+  examType         String?         @map("exam_type")
+  topic            String?
+  difficulty       String?
+  feedbackMode     String?         @map("feedback_mode")
+  startedAt        DateTime        @default(now()) @map("started_at")
+  endedAt          DateTime?       @map("ended_at")
+  durationSeconds  Int?            @map("duration_seconds")
+  status           PracticeStatus  @default(in_progress)
+  createdAt        DateTime        @default(now()) @map("created_at")
+
+  user         Profile               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages     ConversationMessage[]
+  feedback     LanguageFeedback[]
+  summary      SessionSummary?
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@map("practice_sessions")
+}
+
+/// 对话消息
+model ConversationMessage {
+  id             String      @id @default(uuid()) @db.Uuid
+  sessionId      String      @map("session_id") @db.Uuid
+  userId         String      @map("user_id") @db.Uuid
+  role           MessageRole
+  contentText    String      @map("content_text") @db.Text
+  sequenceNumber Int         @map("sequence_number")
+  /// 仅存必要的非敏感结构化信息，不保存原始音频
+  metadata       Json?
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  session  PracticeSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user     Profile            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedback LanguageFeedback[]
+
+  @@unique([sessionId, sequenceNumber])
+  @@index([userId])
+  @@index([sessionId])
+  @@map("conversation_messages")
+}
+
+/// 语言反馈
+model LanguageFeedback {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  sessionId     String   @map("session_id") @db.Uuid
+  messageId     String?  @map("message_id") @db.Uuid
+  category      String
+  originalText  String   @map("original_text") @db.Text
+  correctedText String   @map("corrected_text") @db.Text
+  explanation   String   @db.Text
+  severity      String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user         Profile              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session      PracticeSession      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  message      ConversationMessage? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  reviewItems  ReviewItem[]
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([messageId])
+  @@map("language_feedback")
+}
+
+/// 练习总结
+model SessionSummary {
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
+  sessionId         String   @unique @map("session_id") @db.Uuid
+  strengths         Json
+  keyErrors         Json     @map("key_errors")
+  usefulPhrases     Json     @map("useful_phrases")
+  nextPracticeFocus Json     @map("next_practice_focus")
+  /// 数据充分性标记，例如 sufficient / insufficient
+  dataConfidence    String?  @map("data_confidence")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  user    Profile         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session PracticeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session_summaries")
+}
+
+/// 学习状态（每个用户一行）
+model LearningProfile {
+  userId          String   @id @map("user_id") @db.Uuid
+  currentFocus    String?  @map("current_focus")
+  /// 内部辅助估计，不是官方分数
+  estimatedLevel  String?  @map("estimated_level")
+  levelConfidence String?  @map("level_confidence")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("learning_profiles")
+}
+
+/// 学习指标快照
+model SkillMetric {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  skillKey     String   @map("skill_key")
+  metricValue  Decimal  @map("metric_value") @db.Decimal(10, 4)
+  sampleCount  Int      @map("sample_count")
+  periodStart  DateTime @map("period_start")
+  periodEnd    DateTime @map("period_end")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, skillKey])
+  @@index([userId, periodStart, periodEnd])
+  @@map("skill_metrics")
+}
+
+/// 待复习内容
+model ReviewItem {
+  id               String       @id @default(uuid()) @db.Uuid
+  userId           String       @map("user_id") @db.Uuid
+  sourceFeedbackId String?      @map("source_feedback_id") @db.Uuid
+  itemType         String       @map("item_type")
+  prompt           String       @db.Text
+  expectedAnswer   String       @map("expected_answer") @db.Text
+  status           ReviewStatus @default(pending)
+  dueAt            DateTime?    @map("due_at")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  user           Profile           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceFeedback LanguageFeedback? @relation(fields: [sourceFeedbackId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status, dueAt])
+  @@index([sourceFeedbackId])
+  @@map("review_items")
+}
