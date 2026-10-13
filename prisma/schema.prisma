@@ -32,15 +32,19 @@ enum ReviewStatus {
   later
 }
 
-/// 用户资料
+/// 用户资料（含邮箱密码认证字段）
 model Profile {
-  id                        String   @id @default(uuid()) @db.Uuid
-  displayName               String?  @map("display_name")
-  englishLevel              String?  @map("english_level")
-  learningGoal              String?  @map("learning_goal")
-  preferredFeedbackLanguage String?  @map("preferred_feedback_language")
-  createdAt                 DateTime @default(now()) @map("created_at")
-  updatedAt                 DateTime @updatedAt @map("updated_at")
+  id                        String    @id @default(uuid()) @db.Uuid
+  email                     String    @unique
+  /// 仅存哈希，禁止返回给客户端
+  passwordHash              String    @map("password_hash")
+  emailVerified             DateTime? @map("email_verified")
+  displayName               String?   @map("display_name")
+  englishLevel              String?   @map("english_level")
+  learningGoal              String?   @map("learning_goal")
+  preferredFeedbackLanguage String?   @map("preferred_feedback_language")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  updatedAt                 DateTime  @updatedAt @map("updated_at")
 
   practiceSessions   PracticeSession[]
   conversationMessages ConversationMessage[]
