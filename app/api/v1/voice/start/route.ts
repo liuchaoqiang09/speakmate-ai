@@ -128,7 +128,7 @@ export async function POST(request: Request) {
   const roomId = createOwnedRoomId(sessionId);
   const userId = createUserId();
   const taskId = createTaskId();
-  const expireAt = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
+  const expireAt = Math.floor(Date.now() / 1000) + 2 * 60 * 60;
 
   let token = "";
   try {

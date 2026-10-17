@@ -37,6 +37,9 @@ export async function POST(
   if (!json || typeof json !== "object" || Array.isArray(json)) {
     return NextResponse.json({ success: false, error: "请提交答案" }, { status: 400 });
   }
+  if (JSON.stringify(json).length > 80_000) {
+    return NextResponse.json({ success: false, error: "答案过长" }, { status: 400 });
+  }
 
   const result = await submitExamPaper(
     authSession.user.id,

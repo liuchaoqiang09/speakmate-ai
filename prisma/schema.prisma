@@ -68,6 +68,8 @@ model PracticeSession {
   topic            String?
   difficulty       String?
   feedbackMode     String?         @map("feedback_mode")
+  /// 本轮口语重点，只给考官提示使用
+  coachNote        String?         @map("coach_note") @db.Text
   startedAt        DateTime        @default(now()) @map("started_at")
   endedAt          DateTime?       @map("ended_at")
   durationSeconds  Int?            @map("duration_seconds")

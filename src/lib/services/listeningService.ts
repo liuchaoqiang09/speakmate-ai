@@ -230,7 +230,7 @@ export async function createListeningSession(userId: string, topic: string, diff
     },
   });
 
-  return { success: true as const, data: created };
+  return { success: true as const, data: hideScriptTranslation(created) };
 }
 
 export async function getListeningSession(userId: string, id: string) {
@@ -249,7 +249,16 @@ export async function getListeningSession(userId: string, id: string) {
   if (!session) {
     return { success: false as const, error: "听力练习不存在", status: 404 };
   }
-  return { success: true as const, data: session };
+  return { success: true as const, data: hideScriptTranslation(session) };
+}
+
+function hideScriptTranslation<T extends { status?: string; publicContent?: unknown }>(session: T): T {
+  if (session.status === "submitted" || !session.publicContent || typeof session.publicContent !== "object") {
+    return session;
+  }
+  const content = { ...(session.publicContent as Record<string, unknown>) };
+  delete content.scriptZh;
+  return { ...session, publicContent: content };
 }
 
 function normalizeAnswer(value: string): string {
@@ -271,7 +280,7 @@ function answersMatch(given: string, expected: string): boolean {
   }
   const left = normalizeAnswer(given);
   const right = normalizeAnswer(expected);
-  if (left === right || (right.length > 2 && left.includes(right)) || (left.length > 2 && right.includes(left))) {
+  if (left === right) {
     return true;
   }
   const givenLetter = optionLetter(given);

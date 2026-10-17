@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppHeader } from "@/src/components/shell/AppHeader";
 import { findReadingSet, readingSetsFor } from "@/src/lib/exam/readingSets";
 
@@ -133,6 +133,7 @@ export function PaperSession({
   const [discussion, setDiscussion] = useState("");
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [passageIndex, setPassageIndex] = useState(0);
+  const autoSubmittedRef = useRef(false);
 
   useEffect(() => {
     if (phase !== "live" || seconds <= 0) {
@@ -158,6 +159,7 @@ export function PaperSession({
   }, [answers, passage]);
 
   async function startPaper() {
+    autoSubmittedRef.current = false;
     setPhase("creating");
     setError("");
     try {
@@ -221,6 +223,17 @@ export function PaperSession({
       setPhase("live");
     }
   }
+
+  const submitRef = useRef(submitPaper);
+  submitRef.current = submitPaper;
+
+  useEffect(() => {
+    if (phase !== "live" || seconds !== 0 || autoSubmittedRef.current) {
+      return;
+    }
+    autoSubmittedRef.current = true;
+    void submitRef.current();
+  }, [phase, seconds]);
 
   function setAnswer(id: string, value: string) {
     setAnswers((current) => ({ ...current, [id]: value }));

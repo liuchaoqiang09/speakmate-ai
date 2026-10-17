@@ -43,7 +43,7 @@ export default function RegisterPage() {
         return;
       }
 
-      setSuccess("Account ready  正在前往登录");
+      setSuccess("如果这个邮箱还没有账号，已经创建好了。请登录。如果以前注册过，请用原来的密码。");
       router.push("/login");
     } catch {
       setError("Network error  请稍后重试");

@@ -27,6 +27,11 @@ export default function LoginPage() {
         redirect: false,
       });
 
+      if (result?.error === "TooManyAttempts") {
+        setError("Too many attempts  尝试次数过多，请 15 分钟后再试");
+        return;
+      }
+
       if (!result || result.error) {
         setError("Email or password is incorrect  邮箱或密码不正确");
         return;

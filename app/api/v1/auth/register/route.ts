@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { clientIpFromHeaders, noteAuthAttempt, tooManyAuthAttempts } from "@/src/lib/auth/attemptLimit";
 import { prisma } from "@/src/lib/db/prisma";
 
 const registerSchema = z.object({
@@ -44,54 +45,46 @@ export async function POST(request: Request) {
   }
 
   const email = parsed.data.email;
+  const ip = clientIpFromHeaders(request.headers);
+  if (tooManyAuthAttempts("register", ip, email)) {
+    return NextResponse.json(
+      { success: false, error: "尝试次数过多，请 15 分钟后再试" },
+      { status: 429 }
+    );
+  }
+  noteAuthAttempt("register", ip, email);
+
   const displayName = parsed.data.displayName
     ? parsed.data.displayName
     : null;
 
+  const passwordHash = await bcrypt.hash(parsed.data.password, 10);
   const existing = await prisma.profile.findUnique({
     where: { email },
     select: { id: true },
   });
 
   if (existing) {
-    return NextResponse.json(
-      { success: false, error: "该邮箱已被注册" },
-      { status: 409 }
-    );
+    return NextResponse.json({ success: true });
   }
 
-  const passwordHash = await bcrypt.hash(parsed.data.password, 10);
-
   try {
-    const profile = await prisma.profile.create({
+    await prisma.profile.create({
       data: {
         email,
         passwordHash,
         displayName,
       },
-      select: {
-        id: true,
-        email: true,
-        displayName: true,
-      },
+      select: { id: true },
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: profile,
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({ success: true });
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
-      return NextResponse.json(
-        { success: false, error: "该邮箱已被注册" },
-        { status: 409 }
-      );
+      return NextResponse.json({ success: true });
     }
 
     console.error("注册失败", {

@@ -1,6 +1,14 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync("speakmate-dummy-password", 10);
+import {
+  clearAuthEmailAttempts,
+  clientIpFromHeaders,
+  noteAuthAttempt,
+  tooManyAuthAttempts,
+} from "@/src/lib/auth/attemptLimit";
 import { prisma } from "@/src/lib/db/prisma";
 
 /**
@@ -22,11 +30,17 @@ export const authOptions: NextAuthOptions = {
         email: { label: "邮箱", type: "email" },
         password: { label: "密码", type: "password" },
       },
-      async authorize(credentials) {
-        const email = credentials?.email?.trim().toLowerCase();
+      async authorize(credentials, request) {
+        const email = credentials?.email?.trim().toLowerCase() || "";
         const password = credentials?.password;
+        const ip = clientIpFromHeaders(request.headers);
+
+        if (tooManyAuthAttempts("login", ip, email)) {
+          throw new Error("TooManyAttempts");
+        }
 
         if (!email || !password) {
+          noteAuthAttempt("login", ip, email);
           return null;
         }
 
@@ -40,18 +54,19 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        if (!profile) {
-          return null;
-        }
-
         const passwordMatches = await bcrypt.compare(
           password,
-          profile.passwordHash
+          profile?.passwordHash || DUMMY_PASSWORD_HASH
         );
-        if (!passwordMatches) {
+        if (!profile || !passwordMatches) {
+          noteAuthAttempt("login", ip, email);
+          if (tooManyAuthAttempts("login", ip, email)) {
+            throw new Error("TooManyAttempts");
+          }
           return null;
         }
 
+        clearAuthEmailAttempts("login", ip, email);
         return {
           id: profile.id,
           email: profile.email,
