@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { AppHeader } from "@/src/components/shell/AppHeader";
+import { findReadingSet, readingSetsFor } from "@/src/lib/exam/readingSets";
 
 const EXAMS = [
   { value: "ielts", label: "IELTS" },
@@ -16,60 +18,83 @@ const IELTS_PARTS = [
 ] as const;
 
 const TOEFL_PARTS = [
-  { value: "pending", label: "题型待核实后补充" },
-] as const;
-
-const MODES = [
-  { value: "practice", label: "练习模式：允许提示与指导" },
-  { value: "simulation", label: "模拟模式：尽量按指定流程进行，结束后统一反馈" },
+  { value: "listen_repeat", label: "Listen and Repeat 听后复述" },
+  { value: "interview", label: "Take an Interview 访谈" },
 ] as const;
 
 type ExamType = (typeof EXAMS)[number]["value"];
-type Mode = (typeof MODES)[number]["value"];
 type IeltsPart = (typeof IELTS_PARTS)[number]["value"];
 type ToeflPart = (typeof TOEFL_PARTS)[number]["value"];
 type Part = IeltsPart | ToeflPart;
 
-function optionClassName(selected: boolean) {
-  if (selected) {
-    return "inline-flex min-h-12 items-center justify-center rounded-2xl bg-neutral-900 px-4 py-3 text-sm font-medium text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 dark:bg-white dark:text-neutral-900";
-  }
-
-  return "inline-flex min-h-12 items-center justify-center rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 dark:border-neutral-600 dark:bg-neutral-900 dark:text-white dark:hover:bg-neutral-800";
+function optionClassName(_selected: boolean) {
+  return "ink-chip";
 }
 
 export default function ExamPage() {
   const router = useRouter();
   const [exam, setExam] = useState<ExamType>("ielts");
   const [part, setPart] = useState<Part>("part1");
-  const [mode, setMode] = useState<Mode>("practice");
+  const [readingSet, setReadingSet] = useState("passage1");
+  const [history, setHistory] = useState<Array<{ label: string; score: string }>>([]);
 
   const parts = exam === "ielts" ? IELTS_PARTS : TOEFL_PARTS;
 
+  useEffect(() => {
+    let ignore = false;
+    async function loadHistory() {
+      try {
+        const response = await fetch(`/api/v1/exam-history?exam=${exam}`);
+        if (!response.ok) {
+          return;
+        }
+        const result = (await response.json()) as { success?: boolean; data?: { rows?: Array<{ label: string; score: string }> } };
+        if (!ignore && result.success && result.data?.rows) {
+          setHistory(result.data.rows);
+        }
+      } catch {
+        if (!ignore) {
+          setHistory([]);
+        }
+      }
+    }
+    void loadHistory();
+    return () => {
+      ignore = true;
+    };
+  }, [exam]);
+
   function handleSelectExam(nextExam: ExamType) {
     setExam(nextExam);
-    setPart(nextExam === "ielts" ? "part1" : "pending");
+    setPart(nextExam === "ielts" ? "part1" : "listen_repeat");
+    setReadingSet(nextExam === "ielts" ? "passage1" : "complete_words");
   }
 
-  function handleStartTraining() {
-    const settings = { exam, part, mode };
-    console.log("考试口语训练设置", settings);
-    const params = new URLSearchParams(settings);
-    router.push(`/exam/practice?${params.toString()}`);
+  function startVoice(mode: "practice" | "simulation") {
+    const params = new URLSearchParams({ exam, part, mode });
+    router.push(`/exam/voice?${params.toString()}`);
+  }
+
+  function startPaper(skill: "reading" | "writing") {
+    const params = new URLSearchParams({ exam });
+    if (skill === "reading") {
+      params.set("set", readingSet);
+    }
+    router.push(`/exam/${skill}?${params.toString()}`);
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center px-6 py-16">
-      <div className="w-full max-w-xl">
-        <h1 className="text-center text-4xl font-semibold tracking-tight sm:text-5xl">
-          IELTS / TOEFL 口语训练
-        </h1>
-        <p className="mt-4 text-center text-lg text-neutral-600 dark:text-neutral-400">
-          选择考试类型、题型和练习模式后开始训练。
-        </p>
+    <div className="min-h-screen bg-[#F6F3EE]">
+      <AppHeader />
+    <main className="flex flex-col items-center px-5 py-10 sm:px-6 sm:py-14">
+      <div className="ink-card w-full max-w-xl p-6 sm:p-8">
+        <p className="text-xs font-semibold tracking-[0.22em] text-[#0E7C66]">EXAM</p>
+        <h1 className="mt-3 text-[32px] font-semibold tracking-tight text-[#1C1917]">IELTS & TOEFL</h1>
+        <p className="mt-2 text-sm text-[#8A847C]">阅读、写作、口语</p>
+        <p className="mt-3 text-sm leading-6 text-[#6F6A63]">先选考试，再进入阅读、写作或口语</p>
 
         <fieldset className="mt-10">
-          <legend className="text-base font-medium">选择考试类型</legend>
+          <legend className="text-sm font-medium text-[#1C1917]">Exam <span className="font-normal text-[#8A847C]">考试</span></legend>
           <div className="mt-3 flex flex-wrap gap-3">
             {EXAMS.map((item) => (
               <button
@@ -85,16 +110,33 @@ export default function ExamPage() {
           </div>
         </fieldset>
 
+        <label className="mt-8 block text-sm font-medium text-[#1C1917]">
+          Reading <span className="font-normal text-[#8A847C]">文章</span>
+          <select
+            className="ink-input mt-2"
+            value={readingSet}
+            onChange={(event) => setReadingSet(event.target.value)}
+          >
+            {readingSetsFor(exam).map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.label} · {item.labelZh}
+              </option>
+            ))}
+          </select>
+          <span className="mt-2 block font-normal leading-6 text-[#6F6A63]">{findReadingSet(exam, readingSet).types}</span>
+        </label>
+
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+          <button type="button" className="ink-btn w-full flex-1" onClick={() => startPaper("reading")}>
+            Reading
+          </button>
+          <button type="button" className="ink-btn w-full flex-1" onClick={() => startPaper("writing")}>
+            Writing
+          </button>
+        </div>
+
         <fieldset className="mt-8">
-          <legend className="text-base font-medium">选择题型 / 练习任务</legend>
-          {exam === "toefl" ? (
-            <p
-              className="mt-3 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
-              role="status"
-            >
-              TOEFL 题型待核实当前官方考试要求后补充
-            </p>
-          ) : null}
+          <legend className="text-sm font-medium text-[#1C1917]">Speaking <span className="font-normal text-[#8A847C]">口语部分</span></legend>
           <div className="mt-3 flex flex-col gap-3">
             {parts.map((item) => (
               <button
@@ -110,39 +152,31 @@ export default function ExamPage() {
           </div>
         </fieldset>
 
-        <fieldset className="mt-8">
-          <legend className="text-base font-medium">选择练习模式</legend>
-          <div className="mt-3 flex flex-col gap-3">
-            {MODES.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                aria-pressed={mode === item.value}
-                className={`${optionClassName(mode === item.value)} w-full text-left sm:justify-start`}
-                onClick={() => setMode(item.value)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-
-        <div className="mt-12 flex flex-col gap-4">
-          <button
-            type="button"
-            className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl bg-neutral-900 px-6 py-4 text-base font-medium text-white transition hover:bg-neutral-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
-            onClick={handleStartTraining}
-          >
-            开始训练
+        <div className="mt-8 flex flex-col gap-3">
+          <button type="button" className="ink-btn w-full" onClick={() => startVoice("practice")}>
+            Practice with hints
+            <span className="ml-2 text-xs font-normal text-white/80">练习模式</span>
           </button>
-          <Link
-            href="/"
-            className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl border border-neutral-300 bg-white px-6 py-4 text-base font-medium text-neutral-900 transition hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 dark:border-neutral-600 dark:bg-neutral-900 dark:text-white dark:hover:bg-neutral-800"
-          >
-            返回首页
-          </Link>
+          <button type="button" className="ink-btn-line w-full" onClick={() => startVoice("simulation")}>
+            Full mock
+            <span className="ml-2 text-xs font-normal text-[#8A847C]">模拟模式</span>
+          </button>
         </div>
+        {history.length > 0 ? (
+          <section className="mt-8">
+            <h2 className="text-sm font-medium">Recent scores <span className="font-normal text-[#8A847C]">最近分数 · 原文 5 天、分数 30 天</span></h2>
+            <ul className="mt-3 space-y-2 text-sm">
+              {history.map((item, index) => (
+                <li key={`${item.label}-${index}`} className="flex justify-between gap-3">
+                  <span>{item.label}</span>
+                  <span className="font-semibold text-[#0E7C66]">{item.score}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
       </div>
     </main>
+    </div>
   );
 }

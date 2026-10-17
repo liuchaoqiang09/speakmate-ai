@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AppHeader } from "@/src/components/shell/AppHeader";
 
 const TOPICS = [
   "日常生活",
@@ -13,7 +13,6 @@ const TOPICS = [
   "旅行",
   "学习与工作",
   "求职面试",
-  "自由对话",
 ] as const;
 
 const DIFFICULTIES = ["初级", "中级", "高级"] as const;
@@ -27,12 +26,8 @@ type Topic = (typeof TOPICS)[number];
 type Difficulty = (typeof DIFFICULTIES)[number];
 type FeedbackPreference = (typeof FEEDBACK_OPTIONS)[number]["value"];
 
-function optionClassName(selected: boolean) {
-  if (selected) {
-    return "inline-flex min-h-12 items-center justify-center rounded-2xl bg-neutral-900 px-4 py-3 text-sm font-medium text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 dark:bg-white dark:text-neutral-900";
-  }
-
-  return "inline-flex min-h-12 items-center justify-center rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 dark:border-neutral-600 dark:bg-neutral-900 dark:text-white dark:hover:bg-neutral-800";
+function optionClassName(_selected: boolean) {
+  return "ink-chip";
 }
 
 export default function GeneralPage() {
@@ -41,25 +36,23 @@ export default function GeneralPage() {
   const [difficulty, setDifficulty] = useState<Difficulty>("初级");
   const [feedback, setFeedback] = useState<FeedbackPreference>("end");
 
-  function handleStartPractice() {
-    const settings = { topic, difficulty, feedback };
-    console.log("通用口语训练设置", settings);
-    const params = new URLSearchParams(settings);
-    router.push(`/general/practice?${params.toString()}`);
+  function startWith(kind: "practice" | "voice") {
+    const params = new URLSearchParams({ topic, difficulty, feedback });
+    router.push(`/general/${kind}?${params.toString()}`);
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center px-6 py-16">
-      <div className="w-full max-w-xl">
-        <h1 className="text-center text-4xl font-semibold tracking-tight sm:text-5xl">
-          通用口语
-        </h1>
-        <p className="mt-4 text-center text-lg text-neutral-600 dark:text-neutral-400">
-          选择主题、难度和反馈方式后开始练习。
-        </p>
+    <div className="min-h-screen bg-[#F6F3EE]">
+      <AppHeader />
+    <main className="flex flex-col items-center px-5 py-10 sm:px-6 sm:py-14">
+      <div className="ink-card w-full max-w-xl p-6 sm:p-8">
+        <p className="text-xs font-semibold tracking-[0.22em] text-[#0E7C66]">DAILY</p>
+        <h1 className="mt-3 text-[32px] font-semibold tracking-tight text-[#1C1917]">Daily speaking</h1>
+        <p className="mt-2 text-sm text-[#8A847C]">通用口语</p>
+        <p className="mt-3 text-sm leading-6 text-[#6F6A63]">选好主题、难度和反馈方式</p>
 
         <fieldset className="mt-10">
-          <legend className="text-base font-medium">选择主题 / 场景</legend>
+          <legend className="text-sm font-medium text-[#1C1917]">Topic <span className="font-normal text-[#8A847C]">主题</span></legend>
           <div className="mt-3 flex flex-wrap gap-3">
             {TOPICS.map((item) => (
               <button
@@ -76,7 +69,7 @@ export default function GeneralPage() {
         </fieldset>
 
         <fieldset className="mt-8">
-          <legend className="text-base font-medium">选择难度</legend>
+          <legend className="text-sm font-medium text-[#1C1917]">Level <span className="font-normal text-[#8A847C]">难度</span></legend>
           <div className="mt-3 flex flex-wrap gap-3">
             {DIFFICULTIES.map((item) => (
               <button
@@ -93,7 +86,7 @@ export default function GeneralPage() {
         </fieldset>
 
         <fieldset className="mt-8">
-          <legend className="text-base font-medium">选择反馈偏好</legend>
+          <legend className="text-sm font-medium text-[#1C1917]">Feedback <span className="font-normal text-[#8A847C]">反馈</span></legend>
           <div className="mt-3 flex flex-col gap-3">
             {FEEDBACK_OPTIONS.map((item) => (
               <button
@@ -109,22 +102,22 @@ export default function GeneralPage() {
           </div>
         </fieldset>
 
-        <div className="mt-12 flex flex-col gap-4">
-          <button
-            type="button"
-            className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl bg-neutral-900 px-6 py-4 text-base font-medium text-white transition hover:bg-neutral-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
-            onClick={handleStartPractice}
-          >
-            开始练习
+        <div className="mt-12 flex flex-col gap-3 sm:flex-row">
+          <button type="button" className="ink-btn-line w-full flex-1" onClick={() => startWith("practice")}>
+            <span className="flex flex-col items-center leading-none">
+              <span>Text dialogue</span>
+              <span className="mt-1 text-xs font-normal text-[#8A847C]">文本对话</span>
+            </span>
           </button>
-          <Link
-            href="/"
-            className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl border border-neutral-300 bg-white px-6 py-4 text-base font-medium text-neutral-900 transition hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 dark:border-neutral-600 dark:bg-neutral-900 dark:text-white dark:hover:bg-neutral-800"
-          >
-            返回首页
-          </Link>
+          <button type="button" className="ink-btn w-full flex-1" onClick={() => startWith("voice")}>
+            <span className="flex flex-col items-center leading-none">
+              <span>Scene dialogue</span>
+              <span className="mt-1 text-xs font-normal text-white/75">场景对话</span>
+            </span>
+          </button>
         </div>
       </div>
     </main>
+    </div>
   );
 }

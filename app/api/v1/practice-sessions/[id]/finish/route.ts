@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/src/lib/auth/authOptions";
 import { endSession } from "@/src/lib/services/conversationService";
+import { generateSummary } from "@/src/lib/services/summaryService";
+
+export const maxDuration = 120;
 
 const paramsSchema = z.object({
   id: z.string().uuid("练习 ID 无效"),
@@ -28,13 +31,33 @@ export async function POST(
     );
   }
 
-  const result = await endSession(params.data.id, authSession.user.id);
-  if (!result.success) {
+  const ended = await endSession(params.data.id, authSession.user.id);
+  if (!ended.success) {
     return NextResponse.json(
-      { success: false, error: result.error },
-      { status: result.status }
+      { success: false, error: ended.error },
+      { status: ended.status }
     );
   }
 
-  return NextResponse.json({ success: true, data: result.data });
+  const summaryResult = await generateSummary(
+    params.data.id,
+    authSession.user.id
+  );
+
+  if (!summaryResult.success) {
+    return NextResponse.json({
+      success: true,
+      data: { session: ended.data.session },
+      warning: `练习已结束，但总结生成失败：${summaryResult.error}`,
+    });
+  }
+
+  return NextResponse.json({
+    success: true,
+    data: {
+      session: ended.data.session,
+      summary: summaryResult.data.summary,
+      feedback: summaryResult.data.feedback,
+    },
+  });
 }

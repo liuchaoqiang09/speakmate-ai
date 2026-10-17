@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/src/lib/auth/authOptions";
 import { createSession } from "@/src/lib/services/conversationService";
+import { clearPracticeHistory, listPracticeHistory } from "@/src/lib/services/progressService";
 
 const createSchema = z.object({
   mode: z.enum(["general", "exam"], {
@@ -16,7 +17,19 @@ const createSchema = z.object({
     .max(100),
   difficulty: z.string().trim().max(50).optional().nullable(),
   feedbackMode: z.string().trim().max(50).optional().nullable(),
+  sceneDialogue: z.boolean().optional(),
+  coachNote: z.string().trim().max(800).optional().nullable(),
 });
+
+export async function GET() {
+  const authSession = await getServerSession(authOptions);
+  if (!authSession?.user?.id) {
+    return NextResponse.json({ success: false, error: "未登录" }, { status: 401 });
+  }
+
+  const rows = await listPracticeHistory(authSession.user.id);
+  return NextResponse.json({ success: true, data: { rows } });
+}
 
 export async function POST(request: Request) {
   const authSession = await getServerSession(authOptions);
@@ -58,4 +71,14 @@ export async function POST(request: Request) {
     { success: true, data: result.data },
     { status: 201 }
   );
+}
+
+export async function DELETE() {
+  const authSession = await getServerSession(authOptions);
+  if (!authSession?.user?.id) {
+    return NextResponse.json({ success: false, error: "未登录" }, { status: 401 });
+  }
+
+  const result = await clearPracticeHistory(authSession.user.id);
+  return NextResponse.json({ success: true, data: result.data });
 }

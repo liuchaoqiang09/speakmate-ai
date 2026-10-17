@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -10,6 +11,14 @@ import {
   useRef,
   useState,
 } from "react";
+import { SceneGoals } from "@/src/components/general/SceneGoals";
+import { AppHeader } from "@/src/components/shell/AppHeader";
+import { WaitHint } from "@/src/components/shell/WaitHint";
+import { AiChineseTranslation } from "@/src/components/practice/AiChineseTranslation";
+import { MicButton, SpeechStatusLine } from "@/src/components/practice/MicButton";
+import { buildCoachNote } from "@/src/lib/general/coachNote";
+import { finishPracticeSession } from "@/src/lib/practice/finishSession";
+import { useSpeechRecognition } from "@/src/lib/speech/useSpeechRecognition";
 
 type ChatMessage = {
   id: string;
@@ -27,6 +36,10 @@ type SessionPayload = {
   session: {
     id: string;
   };
+  opening?: {
+    id: string;
+    contentText: string;
+  } | null;
 };
 
 type MessagesPayload = {
@@ -51,6 +64,7 @@ function GeneralPracticeContent() {
   const difficulty = searchParams.get("difficulty")?.trim() || "";
   const feedback = searchParams.get("feedback");
   const feedbackMode = mapFeedbackMode(feedback);
+  const coachNote = buildCoachNote(searchParams.get("focus"), searchParams.get("phrases"));
 
   const [sessionId, setSessionId] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -63,7 +77,14 @@ function GeneralPracticeContent() {
   const [finished, setFinished] = useState(false);
 
   const sessionStartedRef = useRef(false);
+  const sendingRef = useRef(false);
   const listEndRef = useRef<HTMLDivElement | null>(null);
+
+  const speech = useSpeechRecognition({
+    onFinal: (text) => {
+      void handleSend(undefined, text);
+    },
+  });
 
   useEffect(() => {
     if (sessionStartedRef.current || sessionCreateLock) {
@@ -75,7 +96,7 @@ function GeneralPracticeContent() {
     async function startSession() {
       if (!topic) {
         setCreating(false);
-        setPageError("缺少练习主题，请返回设置页重新开始。");
+        setPageError("缺少练习主题，请返回设置页重新开始");
         return;
       }
 
@@ -88,6 +109,7 @@ function GeneralPracticeContent() {
             topic,
             difficulty: difficulty || undefined,
             feedbackMode,
+            coachNote,
           }),
         });
 
@@ -123,14 +145,19 @@ function GeneralPracticeContent() {
     listEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
 
-  async function handleSend(event?: FormEvent) {
+  async function handleSend(event?: FormEvent, override?: string) {
     event?.preventDefault();
-    const content = draft.trim();
-    if (!content || sending || finishing || !sessionId || finished) {
+    const content = (override ?? draft).trim();
+    if (!content || sendingRef.current || finishing || !sessionId || finished) {
       return;
     }
 
+    if (override) {
+      setDraft(override);
+    }
+
     setSendError("");
+    sendingRef.current = true;
     setSending(true);
 
     try {
@@ -171,6 +198,7 @@ function GeneralPracticeContent() {
     } catch {
       setSendError("网络错误，消息未发送");
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   }
@@ -190,134 +218,126 @@ function GeneralPracticeContent() {
     setFinishing(true);
     setSendError("");
 
-    try {
-      const response = await fetch(
-        `/api/v1/practice-sessions/${sessionId}/finish`,
-        { method: "POST" }
-      );
-
-      if (response.status === 401) {
-        router.replace("/login");
-        return;
-      }
-
-      const result = (await response.json()) as ApiResponse<unknown>;
-      if (!result.success) {
-        setSendError(result.error || "结束练习失败");
-        return;
-      }
-
-      setFinished(true);
-      router.push("/general");
-    } catch {
-      setSendError("网络错误，无法结束练习");
-    } finally {
-      setFinishing(false);
+    const result = await finishPracticeSession(sessionId);
+    if (result.unauthorized) {
+      router.replace("/login");
+      return;
     }
+    if (!result.ok) {
+      setSendError(result.error);
+      setFinishing(false);
+      return;
+    }
+
+    setFinished(true);
+    router.push(`/general/summary?sessionId=${sessionId}`);
+    setFinishing(false);
   }
 
   if (creating) {
-    return (
-      <main className="flex min-h-screen items-center justify-center px-6">
-        <p className="text-neutral-600 dark:text-neutral-400">正在开始练习…</p>
-      </main>
-    );
+    return <WaitHint title="正在打开文本对话" detail="准备场景和第一句，请稍等。" />;
   }
 
   if (pageError || !sessionId) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center px-6 py-16">
-        <div className="w-full max-w-xl text-center">
-          <h1 className="text-3xl font-semibold tracking-tight">通用口语</h1>
-          <p
-            className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-            role="alert"
-          >
-            {pageError || "无法开始练习"}
-          </p>
-          <Link
-            href="/general"
-            className="mt-8 inline-flex min-h-14 items-center justify-center rounded-2xl border border-neutral-300 bg-white px-6 py-4 text-base font-medium text-neutral-900 transition hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 dark:border-neutral-600 dark:bg-neutral-900 dark:text-white dark:hover:bg-neutral-800"
-          >
-            返回设置页
-          </Link>
-        </div>
-      </main>
+      <div className="min-h-screen bg-[#F6F3EE]">
+        <AppHeader />
+        <main className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center px-6 py-16">
+          <div className="w-full max-w-xl text-center">
+            <h1 className="text-[32px] font-semibold tracking-tight">Text dialogue</h1>
+            <p className="mt-1 text-sm text-[#8A847C]">文本对话</p>
+            <p className="ink-alert mt-6" role="alert">
+              {pageError || "无法开始练习"}
+            </p>
+            <Link href="/general" className="ink-btn-line mt-8">
+              返回设置页
+            </Link>
+          </div>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col">
-      <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-neutral-200 bg-white/95 px-4 py-4 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/95">
+    <div className="min-h-screen bg-[#F6F3EE]">
+      <AppHeader />
+    <main className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-3xl flex-col">
+      <header className="flex items-start justify-between gap-4 border-b border-[#E6E6E6] px-4 py-4">
         <div>
-          <p className="text-sm text-neutral-500">通用口语</p>
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-            {topic}
-          </h1>
-          <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="text-sm text-[#6F6A63]">Text dialogue · 文本对话</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{topic}</h1>
+          <p className="mt-1 text-sm text-[#6F6F6F]">
             难度：{difficulty || "未指定"} · 反馈：
             {feedbackMode === "immediate" ? "每轮简短纠错" : "结束后统一纠错"}
           </p>
+          {coachNote ? <p className="mt-2 text-sm text-[#0B6654]">This round · {searchParams.get("focus")}</p> : null}
         </div>
         <button
           type="button"
           onClick={() => void handleFinish()}
           disabled={finishing || finished}
-          className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-2xl border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 dark:border-neutral-600 dark:bg-neutral-900 dark:text-white dark:hover:bg-neutral-800"
+          className="ink-btn-line h-12 shrink-0 px-4 text-sm"
         >
-          {finishing ? "结束中…" : "结束练习"}
+          {finishing ? "Ending" : "End session"}
         </button>
       </header>
 
-      <section className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4">
+      <div className="px-4 pt-4">
+        <SceneGoals topic={topic} difficulty={difficulty} />
+      </div>
+
+      <section className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-5">
         {messages.length === 0 && !sending ? (
-          <p className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
-            还没有消息。用英语打个招呼，开始练习吧。
+          <p className="rounded-2xl border border-[#E6E6E6] bg-white px-4 py-3 text-sm text-[#6F6F6F]">
+            Say hello in English · 用英语打个招呼
           </p>
         ) : null}
 
         {messages.map((message) => (
           <div
             key={message.id}
-            className={
-              message.role === "user" ? "flex justify-end" : "flex justify-start"
-            }
+            className={message.role === "user" ? "flex justify-end" : "flex justify-start"}
           >
-            <div
-              className={
-                message.role === "user"
-                  ? "max-w-[85%] rounded-2xl bg-neutral-900 px-4 py-3 text-sm leading-6 text-white dark:bg-white dark:text-neutral-900"
-                  : "max-w-[85%] rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm leading-6 text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-              }
-            >
-              <p className="mb-1 text-xs opacity-70">
-                {message.role === "user" ? "你" : "AI 陪练"}
+            <div className={message.role === "user" ? "bubble-user" : "bubble-ai"}>
+              <p
+                className={
+                  message.role === "user"
+                    ? "mb-1 text-xs font-medium text-white/65"
+                    : "mb-1 text-xs font-medium text-[#6F6F6F]"
+                }
+              >
+                {message.role === "user" ? "You" : "SpeakMate"}
               </p>
               <p className="whitespace-pre-wrap">{message.content}</p>
+              {message.role === "assistant" ? (
+                <AiChineseTranslation english={message.content} />
+              ) : null}
             </div>
           </div>
         ))}
 
         {sending ? (
-          <p className="text-sm text-neutral-500" role="status">
-            AI 正在思考...
+          <p className="text-sm text-[#6F6F6F]" role="status">
+            Thinking · 正在想下一句
           </p>
         ) : null}
         <div ref={listEndRef} />
       </section>
 
       <form
-        className="sticky bottom-0 border-t border-neutral-200 bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-950"
+        className="sticky bottom-0 border-t border-[#E6E6E6] bg-[#F6F3EE] px-4 py-4"
         onSubmit={(event) => void handleSend(event)}
       >
         {sendError ? (
-          <p
-            className="mb-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-            role="alert"
-          >
+          <p className="ink-alert mb-3" role="alert">
             {sendError}
           </p>
         ) : null}
+        <SpeechStatusLine
+          phase={speech.phase}
+          transcript={speech.transcript}
+          error={speech.error}
+        />
         <div className="flex items-end gap-3">
           <label className="sr-only" htmlFor="practice-input">
             输入英语消息
@@ -329,31 +349,37 @@ function GeneralPracticeContent() {
             disabled={sending || finishing || finished}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={handleEditorKeyDown}
-            placeholder="用英语输入，Enter 发送，Shift+Enter 换行"
-            className="min-h-12 flex-1 resize-none rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-base text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 disabled:opacity-60 dark:border-neutral-600 dark:bg-neutral-900 dark:text-white"
+            placeholder="Write in English"
+            className="ink-input flex-1"
+          />
+          <MicButton
+            disabled={sending || finishing || finished || !sessionId}
+            supported={speech.isSupported}
+            supportChecked={speech.supportChecked}
+            listening={speech.isListening}
+            onStart={speech.start}
+            onStop={speech.stop}
           />
           <button
             type="submit"
             disabled={sending || finishing || finished || !draft.trim()}
-            className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+            className="ink-btn h-14 shrink-0 px-5"
           >
-            {sending ? "发送中…" : "发送"}
+            {sending ? "Sending" : "Send"}
           </button>
         </div>
+        {speech.supportChecked && !speech.isSupported ? (
+          <p className="mt-2 text-xs text-[#8A8A8A]">当前浏览器不支持语音输入，请用 Chrome 或 Edge</p>
+        ) : null}
       </form>
     </main>
+    </div>
   );
 }
 
 export default function GeneralPracticePage() {
   return (
-    <Suspense
-      fallback={
-        <main className="flex min-h-screen items-center justify-center px-6">
-          <p className="text-neutral-600 dark:text-neutral-400">加载练习页…</p>
-        </main>
-      }
-    >
+    <Suspense fallback={<WaitHint title="正在打开练习页" detail="马上可以开始打字对话。" />}>
       <GeneralPracticeContent />
     </Suspense>
   );

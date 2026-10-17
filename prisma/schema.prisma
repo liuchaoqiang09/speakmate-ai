@@ -53,6 +53,8 @@ model Profile {
   learningProfile    LearningProfile?
   skillMetrics       SkillMetric[]
   reviewItems        ReviewItem[]
+  examPapers         ExamPaper[]
+  listeningSessions  ListeningSession[]
 
   @@map("profiles")
 }
@@ -112,8 +114,11 @@ model LanguageFeedback {
   messageId     String?  @map("message_id") @db.Uuid
   category      String
   originalText  String   @map("original_text") @db.Text
+  originalZh    String?  @map("original_zh") @db.Text
   correctedText String   @map("corrected_text") @db.Text
+  correctedZh   String?  @map("corrected_zh") @db.Text
   explanation   String   @db.Text
+  explanationZh String?  @map("explanation_zh") @db.Text
   severity      String?
   createdAt     DateTime @default(now()) @map("created_at")
 
@@ -137,6 +142,8 @@ model SessionSummary {
   keyErrors         Json     @map("key_errors")
   usefulPhrases     Json     @map("useful_phrases")
   nextPracticeFocus Json     @map("next_practice_focus")
+  /// 考试参考分，不含口音。普通练习为空
+  referenceScore    Json?    @map("reference_score")
   /// 数据充分性标记，例如 sufficient / insufficient
   dataConfidence    String?  @map("data_confidence")
   createdAt         DateTime @default(now()) @map("created_at")
@@ -199,4 +206,45 @@ model ReviewItem {
   @@index([userId, status, dueAt])
   @@index([sourceFeedbackId])
   @@map("review_items")
+}
+
+/// 雅思 / 托福阅读或写作试卷。答案只留在服务端。
+model ExamPaper {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  examType      String    @map("exam_type")
+  skill         String
+  publicContent Json      @map("public_content")
+  answerKey     Json      @map("answer_key")
+  response      Json?
+  result        Json?
+  status        String    @default("in_progress")
+  startedAt     DateTime  @default(now()) @map("started_at")
+  submittedAt   DateTime? @map("submitted_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("exam_papers")
+}
+
+/// 听力训练：音频文本和题目，答案只留在服务端。
+model ListeningSession {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  topic         String
+  difficulty    String
+  publicContent Json      @map("public_content")
+  answerKey     Json      @map("answer_key")
+  response      Json?
+  result        Json?
+  status        String    @default("in_progress")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  submittedAt   DateTime? @map("submitted_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("listening_sessions")
 }
