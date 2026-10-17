@@ -1,5 +1,27 @@
+import { randomBytes } from "crypto";
 import { callVolcApi } from "@/src/lib/volc/rtcClient";
 import { resolveSpeaker } from "@/src/lib/volc/voices";
+
+const ROOM_PREFIX = "r";
+const SESSION_HEX_LENGTH = 32;
+const ROOM_RANDOM_HEX_LENGTH = 16;
+
+/**
+ * 房间号里带上练习编号，停房时才能确认这个房间属于哪一次练习。
+ * 随机后缀避免别人只凭练习编号猜出房间号。
+ */
+export function createOwnedRoomId(sessionId: string): string {
+  const compact = sessionId.replace(/-/g, "").toLowerCase();
+  return `${ROOM_PREFIX}${compact}${randomBytes(8).toString("hex")}`;
+}
+
+export function sessionIdFromRoomId(roomId: string): string | null {
+  if (!new RegExp(`^${ROOM_PREFIX}[0-9a-f]{${SESSION_HEX_LENGTH + ROOM_RANDOM_HEX_LENGTH}}$`, "i").test(roomId)) {
+    return null;
+  }
+  const compact = roomId.slice(ROOM_PREFIX.length, ROOM_PREFIX.length + SESSION_HEX_LENGTH).toLowerCase();
+  return `${compact.slice(0, 8)}-${compact.slice(8, 12)}-${compact.slice(12, 16)}-${compact.slice(16, 20)}-${compact.slice(20)}`;
+}
 
 const VOICE_CHAT_VERSION = "2025-06-01";
 const DEFAULT_WELCOME =

@@ -9,16 +9,12 @@ import { buildExamTask } from "@/src/lib/exam/tasks";
 import { readCoachNote } from "@/src/lib/general/coachNote";
 import { generalScene } from "@/src/lib/general/scenes";
 import { createRtcAccessToken } from "@/src/lib/volc/parseRtcToken";
-import { startVoiceChat } from "@/src/lib/volc/startVoiceChat";
+import { createOwnedRoomId, startVoiceChat } from "@/src/lib/volc/startVoiceChat";
 
 const bodySchema = z.object({
   sessionId: z.string().uuid().optional(),
   voice: z.enum(["male", "female"]).optional(),
 });
-
-function createRoomId(): string {
-  return `room${randomBytes(8).toString("hex")}`;
-}
 
 function createUserId(): string {
   return `user${randomBytes(8).toString("hex")}`;
@@ -125,7 +121,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const roomId = createRoomId();
+  if (!sessionId) {
+    return NextResponse.json({ success: false, error: "练习编号无效" }, { status: 400 });
+  }
+
+  const roomId = createOwnedRoomId(sessionId);
   const userId = createUserId();
   const taskId = createTaskId();
   const expireAt = Math.floor(Date.now() / 1000) + 24 * 60 * 60;

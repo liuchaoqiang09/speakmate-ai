@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/src/lib/auth/authOptions";
+import { prisma } from "@/src/lib/db/prisma";
 import { saveVoiceMessage } from "@/src/lib/services/conversationService";
 
 const paramsSchema = z.object({
@@ -60,6 +61,14 @@ export async function POST(
       { success: false, error: firstIssue?.message || "输入校验失败" },
       { status: 400 }
     );
+  }
+
+  const practice = await prisma.practiceSession.findFirst({
+    where: { id: params.data.id, userId: authSession.user.id },
+    select: { userId: true },
+  });
+  if (!practice || practice.userId !== authSession.user.id) {
+    return NextResponse.json({ success: false, error: "练习不存在" }, { status: 404 });
   }
 
   const result = await saveVoiceMessage(

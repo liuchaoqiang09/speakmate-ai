@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/src/lib/auth/authOptions";
-import { stopVoiceChat } from "@/src/lib/volc/startVoiceChat";
+import { prisma } from "@/src/lib/db/prisma";
+import { sessionIdFromRoomId, stopVoiceChat } from "@/src/lib/volc/startVoiceChat";
 
 const bodySchema = z.object({
   roomId: z.string().min(1),
@@ -25,6 +26,19 @@ export async function POST(request: Request) {
   const parsed = bodySchema.safeParse(json);
   if (!parsed.success) {
     return NextResponse.json({ success: false, error: "房间信息不完整" }, { status: 400 });
+  }
+
+  const sessionId = z.string().uuid().safeParse(sessionIdFromRoomId(parsed.data.roomId) || "");
+  if (!sessionId.success) {
+    return NextResponse.json({ success: false, error: "房间不属于当前用户" }, { status: 403 });
+  }
+
+  const practice = await prisma.practiceSession.findFirst({
+    where: { id: sessionId.data, userId: authSession.user.id },
+    select: { id: true },
+  });
+  if (!practice) {
+    return NextResponse.json({ success: false, error: "房间不属于当前用户" }, { status: 403 });
   }
 
   const result = await stopVoiceChat(parsed.data);

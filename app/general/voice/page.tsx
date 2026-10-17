@@ -28,8 +28,61 @@ function mapFeedbackMode(feedback: string | null): "deferred" | "immediate" {
   return "deferred";
 }
 
-/** 避免开发环境严格模式把创建会话的请求打两次 */
-let sessionCreateLock = false;
+type SessionCreateResult =
+  | { sessionId: string }
+  | { error: string }
+  | { unauthorized: true };
+
+const sessionCreates = new Map<string, Promise<SessionCreateResult>>();
+
+function shareSessionCreate(
+  key: string,
+  create: () => Promise<SessionCreateResult>
+): Promise<SessionCreateResult> {
+  const existing = sessionCreates.get(key);
+  if (existing) {
+    return existing;
+  }
+
+  let settled = false;
+  const promise = new Promise<SessionCreateResult>((resolve) => {
+    const timer = window.setTimeout(() => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      if (sessionCreates.get(key) === promise) {
+        sessionCreates.delete(key);
+      }
+      resolve({ error: "创建练习超时，请重试" });
+    }, 10_000);
+
+    create()
+      .then((value) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        window.clearTimeout(timer);
+        resolve(value);
+      })
+      .catch(() => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        window.clearTimeout(timer);
+        resolve({ error: "网络错误，无法创建练习" });
+      });
+  }).finally(() => {
+    if (sessionCreates.get(key) === promise) {
+      sessionCreates.delete(key);
+    }
+  });
+
+  sessionCreates.set(key, promise);
+  return promise;
+}
 
 function GeneralVoiceContent() {
   const router = useRouter();
@@ -46,16 +99,15 @@ function GeneralVoiceContent() {
   const [creating, setCreating] = useState(true);
   const [finishing, setFinishing] = useState(false);
   const roomRef = useRef<VoiceRoomHandle | null>(null);
-  const startedRef = useRef(false);
+  const sessionKey = `${topic}:${difficulty}:${feedbackMode}`;
 
   useEffect(() => {
-    if (startedRef.current || sessionCreateLock) {
-      return;
-    }
-    startedRef.current = true;
-    sessionCreateLock = true;
+    let active = true;
+    setCreating(true);
+    setSessionId("");
+    setPageError("");
 
-    async function startSession() {
+    const pending = shareSessionCreate(sessionKey, async () => {
       try {
         const response = await fetch("/api/v1/practice-sessions", {
           method: "POST",
@@ -70,32 +122,41 @@ function GeneralVoiceContent() {
         });
 
         if (response.status === 401) {
-          router.replace("/login");
-          return;
+          return { unauthorized: true };
         }
 
         const result = (await response.json()) as ApiResponse<SessionPayload>;
         if (!result.success || !result.data?.session.id) {
-          setPageError(result.error || "创建练习失败");
-          return;
+          return { error: result.error || "创建练习失败" };
         }
 
-        setSessionId(result.data.session.id);
+        return { sessionId: result.data.session.id };
       } catch {
-        setPageError("网络错误，无法创建练习");
-      } finally {
-        setCreating(false);
+        return { error: "网络错误，无法创建练习" };
       }
-    }
+    });
 
-    void startSession();
+    void pending.then((outcome) => {
+      if (!active) {
+        return;
+      }
+      if ("unauthorized" in outcome) {
+        router.replace("/login");
+        return;
+      }
+      if ("error" in outcome) {
+        setPageError(outcome.error);
+        setCreating(false);
+        return;
+      }
+      setSessionId(outcome.sessionId);
+      setCreating(false);
+    });
 
     return () => {
-      window.setTimeout(() => {
-        sessionCreateLock = false;
-      }, 2000);
+      active = false;
     };
-  }, [difficulty, feedbackMode, router, topic]);
+  }, [coachNote, difficulty, feedbackMode, router, sessionKey, topic]);
 
   async function endNow() {
     if (finishing) {

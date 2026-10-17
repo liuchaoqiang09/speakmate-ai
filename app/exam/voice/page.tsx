@@ -20,7 +20,61 @@ type SessionPayload = {
   session: { id: string };
 };
 
-const inflightSessions = new Set<string>();
+type SessionCreateResult =
+  | { sessionId: string }
+  | { error: string }
+  | { unauthorized: true };
+
+const sessionCreates = new Map<string, Promise<SessionCreateResult>>();
+
+function shareSessionCreate(
+  key: string,
+  create: () => Promise<SessionCreateResult>
+): Promise<SessionCreateResult> {
+  const existing = sessionCreates.get(key);
+  if (existing) {
+    return existing;
+  }
+
+  let settled = false;
+  const promise = new Promise<SessionCreateResult>((resolve) => {
+    const timer = window.setTimeout(() => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      if (sessionCreates.get(key) === promise) {
+        sessionCreates.delete(key);
+      }
+      resolve({ error: "创建练习超时，请重试" });
+    }, 10_000);
+
+    create()
+      .then((value) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        window.clearTimeout(timer);
+        resolve(value);
+      })
+      .catch(() => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        window.clearTimeout(timer);
+        resolve({ error: "网络错误，无法创建练习" });
+      });
+  }).finally(() => {
+    if (sessionCreates.get(key) === promise) {
+      sessionCreates.delete(key);
+    }
+  });
+
+  sessionCreates.set(key, promise);
+  return promise;
+}
 
 function formatClock(totalSeconds: number): string {
   const safe = Math.max(0, totalSeconds);
@@ -35,6 +89,7 @@ function ExamVoiceContent() {
   const requestedExam = searchParams.get("exam")?.trim().toLowerCase() || "ielts";
   const requestedPart = searchParams.get("part")?.trim().toLowerCase() || "part1";
   const practiceMode = searchParams.get("mode")?.trim() === "practice";
+  const focus = searchParams.get("focus") || "";
   const normalized = normalizeExamPart(requestedExam, requestedPart) || {
     exam: "ielts" as const,
     part: "part1" as const,
@@ -49,8 +104,8 @@ function ExamVoiceContent() {
   const [repeatCount, setRepeatCount] = useState(0);
   const [answerCount, setAnswerCount] = useState(0);
   const roomRef = useRef<VoiceRoomHandle | null>(null);
-  const startedRef = useRef(false);
   const clockPhase = useRef<"prep" | "speak" | "run">("run");
+  const partKey = `${normalized.exam}:${normalized.part}:${practiceMode ? "practice" : "simulation"}`;
 
   const script = useMemo(
     () => buildExamTask(normalized.exam, normalized.part, sessionId || "preview"),
@@ -58,14 +113,18 @@ function ExamVoiceContent() {
   );
 
   useEffect(() => {
-    const key = `${normalized.exam}:${normalized.part}`;
-    if (startedRef.current || inflightSessions.has(key)) {
-      return;
-    }
-    startedRef.current = true;
-    inflightSessions.add(key);
+    let active = true;
+    setCreating(true);
+    setSessionId("");
+    setPageError("");
+    setClockSeconds(null);
+    setClockLabel("");
+    setRepeatCount(0);
+    setAnswerCount(0);
+    clockPhase.current = "run";
+    void roomRef.current?.leave();
 
-    async function startSession() {
+    const pending = shareSessionCreate(partKey, async () => {
       try {
         const response = await fetch("/api/v1/practice-sessions", {
           method: "POST",
@@ -78,42 +137,51 @@ function ExamVoiceContent() {
             feedbackMode: practiceMode ? "each" : "deferred",
             coachNote: practiceMode
               ? [
-                  buildCoachNote(searchParams.get("focus"), ""),
+                  buildCoachNote(focus, ""),
                   "PRACTICE MODE: if the learner is stuck, give one short English prompt. Keep answers structured: point, reason, example.",
                 ]
                   .filter(Boolean)
                   .join(" ")
-              : buildCoachNote(searchParams.get("focus"), ""),
+              : buildCoachNote(focus, ""),
           }),
         });
 
         if (response.status === 401) {
-          router.replace("/login");
-          return;
+          return { unauthorized: true };
         }
 
         const result = (await response.json()) as ApiResponse<SessionPayload>;
         if (!result.success || !result.data?.session.id) {
-          setPageError(result.error || "创建练习失败");
-          return;
+          return { error: result.error || "创建练习失败" };
         }
 
-        setSessionId(result.data.session.id);
+        return { sessionId: result.data.session.id };
       } catch {
-        setPageError("网络错误，无法创建练习");
-      } finally {
-        setCreating(false);
+        return { error: "网络错误，无法创建练习" };
       }
-    }
+    });
 
-    void startSession();
+    void pending.then((outcome) => {
+      if (!active) {
+        return;
+      }
+      if ("unauthorized" in outcome) {
+        router.replace("/login");
+        return;
+      }
+      if ("error" in outcome) {
+        setPageError(outcome.error);
+        setCreating(false);
+        return;
+      }
+      setSessionId(outcome.sessionId);
+      setCreating(false);
+    });
 
     return () => {
-      window.setTimeout(() => {
-        inflightSessions.delete(key);
-      }, 2000);
+      active = false;
     };
-  }, [normalized.exam, normalized.part, practiceMode, router]);
+  }, [focus, normalized.exam, normalized.part, partKey, practiceMode, router]);
 
   useEffect(() => {
     if (clockSeconds === null) {

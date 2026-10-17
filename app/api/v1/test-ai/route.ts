@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { callDeepSeek } from "@/src/lib/ai/deepseek";
+import { authOptions } from "@/src/lib/auth/authOptions";
 
 /**
  * 开发阶段用于验证 DeepSeek 服务端调用的测试接口。
@@ -19,6 +21,11 @@ const requestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const authSession = await getServerSession(authOptions);
+  if (!authSession?.user?.id) {
+    return NextResponse.json({ success: false, error: "未登录" }, { status: 401 });
+  }
+
   let json: unknown;
 
   try {
