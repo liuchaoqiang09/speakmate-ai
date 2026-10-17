@@ -101,7 +101,8 @@ export const VoiceRoom = forwardRef<VoiceRoomHandle, VoiceRoomProps>(
     const captionsRef = useRef<VoiceCaption[]>([]);
     const savedKeysRef = useRef(new Set<string>());
     const writeQueueRef = useRef(Promise.resolve());
-    const listEndRef = useRef<HTMLDivElement | null>(null);
+    const transcriptRef = useRef<HTMLDivElement | null>(null);
+    const followLatestRef = useRef(true);
     const onDefiniteRef = useRef(onDefiniteCaption);
     const onLiveRef = useRef(onLive);
     const onEndedRef = useRef(onEnded);
@@ -154,10 +155,44 @@ export const VoiceRoom = forwardRef<VoiceRoomHandle, VoiceRoomProps>(
     }
 
     useEffect(() => {
-      if (captionsHidden) {
+      const box = transcriptRef.current;
+      if (!box) {
         return;
       }
-      listEndRef.current?.scrollIntoView({ block: "end" });
+      function nearEnd() {
+        const panel = transcriptRef.current;
+        if (!panel) {
+          return true;
+        }
+        if (panel.scrollHeight > panel.clientHeight + 8) {
+          return panel.scrollHeight - panel.scrollTop - panel.clientHeight < 96;
+        }
+        return window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 96;
+      }
+      function remember() {
+        followLatestRef.current = nearEnd();
+      }
+      box.addEventListener("scroll", remember, { passive: true });
+      window.addEventListener("scroll", remember, { passive: true });
+      return () => {
+        box.removeEventListener("scroll", remember);
+        window.removeEventListener("scroll", remember);
+      };
+    }, []);
+
+    useEffect(() => {
+      if (captionsHidden || !followLatestRef.current) {
+        return;
+      }
+      const box = transcriptRef.current;
+      if (!box) {
+        return;
+      }
+      if (box.scrollHeight > box.clientHeight + 8) {
+        box.scrollTop = box.scrollHeight;
+      } else {
+        window.scrollTo({ top: document.documentElement.scrollHeight });
+      }
     }, [captions, captionsHidden]);
 
     async function postCaption(
@@ -684,7 +719,7 @@ export const VoiceRoom = forwardRef<VoiceRoomHandle, VoiceRoomProps>(
           ) : null}
         </div>
 
-        <div className="flex min-h-[12rem] flex-1 flex-col gap-4 overflow-y-auto px-4 py-5 pb-4">
+        <div ref={transcriptRef} className="flex min-h-[12rem] flex-1 flex-col gap-4 overflow-y-auto px-4 py-5 pb-4">
           {captionsHidden ? (
             <div className="flex flex-1 items-center justify-center">
               <p className="max-w-xs text-center text-sm leading-6 text-[#8A8A8A]">
@@ -741,7 +776,6 @@ export const VoiceRoom = forwardRef<VoiceRoomHandle, VoiceRoomProps>(
                 );
               })
             : null}
-          <div ref={listEndRef} />
         </div>
 
         {saveError ? (

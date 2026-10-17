@@ -54,8 +54,61 @@ function mapFeedbackMode(feedback: string | null): "deferred" | "immediate" {
   return "deferred";
 }
 
-/** 避免 React Strict Mode 在开发环境把创建会话的请求打两次 */
-let sessionCreateLock = false;
+type SessionCreateResult =
+  | { sessionId: string; opening: SessionPayload["opening"] }
+  | { error: string }
+  | { unauthorized: true };
+
+const sessionCreates = new Map<string, Promise<SessionCreateResult>>();
+
+function shareSessionCreate(
+  key: string,
+  create: () => Promise<SessionCreateResult>
+): Promise<SessionCreateResult> {
+  const existing = sessionCreates.get(key);
+  if (existing) {
+    return existing;
+  }
+
+  let settled = false;
+  const promise = new Promise<SessionCreateResult>((resolve) => {
+    const timer = window.setTimeout(() => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      if (sessionCreates.get(key) === promise) {
+        sessionCreates.delete(key);
+      }
+      resolve({ error: "创建练习超时，请重试" });
+    }, 10_000);
+
+    create()
+      .then((value) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        window.clearTimeout(timer);
+        resolve(value);
+      })
+      .catch(() => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        window.clearTimeout(timer);
+        resolve({ error: "网络错误，无法创建练习" });
+      });
+  }).finally(() => {
+    if (sessionCreates.get(key) === promise) {
+      sessionCreates.delete(key);
+    }
+  });
+
+  sessionCreates.set(key, promise);
+  return promise;
+}
 
 function GeneralPracticeContent() {
   const router = useRouter();
@@ -76,9 +129,9 @@ function GeneralPracticeContent() {
   const [finishing, setFinishing] = useState(false);
   const [finished, setFinished] = useState(false);
 
-  const sessionStartedRef = useRef(false);
   const sendingRef = useRef(false);
-  const listEndRef = useRef<HTMLDivElement | null>(null);
+  const transcriptRef = useRef<HTMLDivElement | null>(null);
+  const followLatestRef = useRef(true);
 
   const speech = useSpeechRecognition({
     onFinal: (text) => {
@@ -87,19 +140,17 @@ function GeneralPracticeContent() {
   });
 
   useEffect(() => {
-    if (sessionStartedRef.current || sessionCreateLock) {
+    if (!topic) {
+      setCreating(false);
+      setPageError("缺少练习主题，请返回设置页重新开始");
       return;
     }
-    sessionStartedRef.current = true;
-    sessionCreateLock = true;
 
-    async function startSession() {
-      if (!topic) {
-        setCreating(false);
-        setPageError("缺少练习主题，请返回设置页重新开始");
-        return;
-      }
-
+    let active = true;
+    setCreating(true);
+    setPageError("");
+    const key = `${topic}:${difficulty}:${feedbackMode}:${coachNote}`;
+    const pending = shareSessionCreate(key, async () => {
       try {
         const response = await fetch("/api/v1/practice-sessions", {
           method: "POST",
@@ -114,35 +165,90 @@ function GeneralPracticeContent() {
         });
 
         if (response.status === 401) {
-          router.replace("/login");
-          return;
+          return { unauthorized: true };
         }
 
         const result = (await response.json()) as ApiResponse<SessionPayload>;
         if (!result.success || !result.data?.session.id) {
-          setPageError(result.error || "创建练习失败");
-          return;
+          return { error: result.error || "创建练习失败" };
         }
 
-        setSessionId(result.data.session.id);
+        return { sessionId: result.data.session.id, opening: result.data.opening };
       } catch {
-        setPageError("网络错误，无法创建练习");
-      } finally {
-        setCreating(false);
+        return { error: "网络错误，无法创建练习" };
       }
-    }
+    });
 
-    void startSession();
+    void pending.then((outcome) => {
+      if (!active) {
+        return;
+      }
+      if ("unauthorized" in outcome) {
+        router.replace("/login");
+        return;
+      }
+      if ("error" in outcome) {
+        setPageError(outcome.error);
+        setCreating(false);
+        return;
+      }
+      setSessionId(outcome.sessionId);
+      if (outcome.opening?.contentText) {
+        setMessages([
+          {
+            id: outcome.opening.id,
+            role: "assistant",
+            content: outcome.opening.contentText,
+          },
+        ]);
+      }
+      setCreating(false);
+    });
 
     return () => {
-      window.setTimeout(() => {
-        sessionCreateLock = false;
-      }, 2000);
+      active = false;
     };
   }, [coachNote, difficulty, feedbackMode, router, topic]);
 
   useEffect(() => {
-    listEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const box = transcriptRef.current;
+    if (!box) {
+      return;
+    }
+    function nearEnd() {
+      const panel = transcriptRef.current;
+      if (!panel) {
+        return true;
+      }
+      if (panel.scrollHeight > panel.clientHeight + 8) {
+        return panel.scrollHeight - panel.scrollTop - panel.clientHeight < 96;
+      }
+      return window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 96;
+    }
+    function remember() {
+      followLatestRef.current = nearEnd();
+    }
+    box.addEventListener("scroll", remember, { passive: true });
+    window.addEventListener("scroll", remember, { passive: true });
+    return () => {
+      box.removeEventListener("scroll", remember);
+      window.removeEventListener("scroll", remember);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!followLatestRef.current) {
+      return;
+    }
+    const box = transcriptRef.current;
+    if (!box) {
+      return;
+    }
+    if (box.scrollHeight > box.clientHeight + 8) {
+      box.scrollTop = box.scrollHeight;
+    } else {
+      window.scrollTo({ top: document.documentElement.scrollHeight });
+    }
   }, [messages, sending]);
 
   async function handleSend(event?: FormEvent, override?: string) {
@@ -286,7 +392,7 @@ function GeneralPracticeContent() {
         <SceneGoals topic={topic} difficulty={difficulty} />
       </div>
 
-      <section className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-5">
+      <section ref={transcriptRef} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-5">
         {messages.length === 0 && !sending ? (
           <p className="rounded-2xl border border-[#E6E6E6] bg-white px-4 py-3 text-sm text-[#6F6F6F]">
             Say hello in English · 用英语打个招呼
@@ -321,7 +427,6 @@ function GeneralPracticeContent() {
             Thinking · 正在想下一句
           </p>
         ) : null}
-        <div ref={listEndRef} />
       </section>
 
       <form

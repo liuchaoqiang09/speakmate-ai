@@ -135,13 +135,20 @@ export function PaperSession({
   const [passageIndex, setPassageIndex] = useState(0);
   const autoSubmittedRef = useRef(false);
 
+  const secondsRef = useRef(seconds);
+  secondsRef.current = seconds;
+
   useEffect(() => {
-    if (phase !== "live" || seconds <= 0) {
+    if (phase !== "live") {
       return;
     }
-    const timer = window.setTimeout(() => setSeconds((current) => current - 1), 1000);
-    return () => window.clearTimeout(timer);
-  }, [phase, seconds]);
+    const endsAt = Date.now() + secondsRef.current * 1000;
+    const timer = window.setInterval(() => {
+      const remain = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+      setSeconds((current) => (current === remain ? current : remain));
+    }, 500);
+    return () => window.clearInterval(timer);
+  }, [phase]);
 
   const passage = paper?.passages?.[passageIndex];
   const headingChoices = passage?.headings || [];
