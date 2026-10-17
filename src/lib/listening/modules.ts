@@ -428,11 +428,11 @@ export function getListeningModule(id: string): ListeningModule | undefined {
 }
 
 export function listeningTopicLabel(topic: string): string {
-  const module = getListeningModule(topic);
-  if (!module) {
+  const listeningModule = getListeningModule(topic);
+  if (!listeningModule) {
     return topic;
   }
-  return module.group === "daily" ? module.labelZh : `${module.examLabel}`;
+  return listeningModule.group === "daily" ? listeningModule.labelZh : `${listeningModule.examLabel}`;
 }
 
 export function isExamListening(topic: string): boolean {

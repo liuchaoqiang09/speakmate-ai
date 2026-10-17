@@ -139,7 +139,7 @@ function GeneralPracticeContent() {
         sessionCreateLock = false;
       }, 2000);
     };
-  }, [difficulty, feedbackMode, router, topic]);
+  }, [coachNote, difficulty, feedbackMode, router, topic]);
 
   useEffect(() => {
     listEndRef.current?.scrollIntoView({ behavior: "smooth" });

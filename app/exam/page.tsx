@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/src/components/shell/AppHeader";
@@ -27,7 +26,7 @@ type IeltsPart = (typeof IELTS_PARTS)[number]["value"];
 type ToeflPart = (typeof TOEFL_PARTS)[number]["value"];
 type Part = IeltsPart | ToeflPart;
 
-function optionClassName(_selected: boolean) {
+function optionClassName() {
   return "ink-chip";
 }
 
@@ -101,7 +100,7 @@ export default function ExamPage() {
                 key={item.value}
                 type="button"
                 aria-pressed={exam === item.value}
-                className={optionClassName(exam === item.value)}
+                className={optionClassName()}
                 onClick={() => handleSelectExam(item.value)}
               >
                 {item.label}
@@ -143,7 +142,7 @@ export default function ExamPage() {
                 key={item.value}
                 type="button"
                 aria-pressed={part === item.value}
-                className={`${optionClassName(part === item.value)} w-full text-left sm:justify-start`}
+                className={`${optionClassName()} w-full text-left sm:justify-start`}
                 onClick={() => setPart(item.value)}
               >
                 {item.label}

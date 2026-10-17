@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AppHeader } from "@/src/components/shell/AppHeader";
 
 type HistoryRow = {
@@ -25,7 +25,7 @@ export default function ListeningHistoryPage() {
   const [busyId, setBusyId] = useState("");
   const [clearing, setClearing] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const response = await fetch("/api/v1/listening");
       if (response.status === 401) {
@@ -44,11 +44,11 @@ export default function ListeningHistoryPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [router]);
 
   useEffect(() => {
     void load();
-  }, [router]);
+  }, [load]);
 
   async function deleteOne(id: string) {
     if (!window.confirm("删除这条听力？原文、题目和作答会一起删掉，不能恢复。")) {

@@ -137,19 +137,19 @@ function adviceFor(topic: string, allCorrect: boolean): string {
 }
 
 export async function createListeningSession(userId: string, topic: string, difficulty: string) {
-  const module = getListeningModule(topic);
-  if (!module) {
+  const listeningModule = getListeningModule(topic);
+  if (!listeningModule) {
     return { success: false as const, error: "请选择听力模块", status: 400 };
   }
-  const exam = isExamListening(module.id);
-  const level = exam ? module.difficulty : difficulty || module.difficulty;
+  const exam = isExamListening(listeningModule.id);
+  const level = exam ? listeningModule.difficulty : difficulty || listeningModule.difficulty;
   const prompt = [
     "Return STRICT JSON only. No markdown.",
-    exam ? module.prompt : dailyPrompt(module.id, level),
+    exam ? listeningModule.prompt : dailyPrompt(listeningModule.id, level),
     "Do not put the correct answer in the prompt text.",
     "Every question needs prompt, prompt_zh, explanation, explanation_zh.",
-    `Number of questions must be between ${module.questionsMin} and ${module.questionsMax}.`,
-    JSON.stringify(exampleShape(module, exam)),
+    `Number of questions must be between ${listeningModule.questionsMin} and ${listeningModule.questionsMax}.`,
+    JSON.stringify(exampleShape(listeningModule, exam)),
   ].join("\n");
 
   const ai = await callDeepSeek(
@@ -178,8 +178,8 @@ export async function createListeningSession(userId: string, topic: string, diff
     return { success: false as const, error: "听力题目结构无效", status: 502 };
   }
   if (
-    parsed.data.questions.length < module.questionsMin ||
-    parsed.data.questions.length > module.questionsMax
+    parsed.data.questions.length < listeningModule.questionsMin ||
+    parsed.data.questions.length > listeningModule.questionsMax
   ) {
     return { success: false as const, error: "听力题目数量不符合该考试部分", status: 502 };
   }
@@ -195,21 +195,21 @@ export async function createListeningSession(userId: string, topic: string, diff
   const created = await prisma.listeningSession.create({
     data: {
       userId,
-      topic: module.id,
+      topic: listeningModule.id,
       difficulty: level,
       publicContent: {
         title: parsed.data.title,
         titleZh: parsed.data.title_zh,
-        instructions: parsed.data.instructions || module.rulesZh,
-        instructionsZh: parsed.data.instructions_zh || module.rulesZh,
+        instructions: parsed.data.instructions || listeningModule.rulesZh,
+        instructionsZh: parsed.data.instructions_zh || listeningModule.rulesZh,
         script: parsed.data.script,
         scriptZh: parsed.data.script_zh,
         questions: publicQuestions,
-        format: module.group,
-        examLabel: module.examLabel,
-        playOnce: module.playOnce,
-        voiceLang: module.voiceLang,
-        defaultRate: module.defaultRate,
+        format: listeningModule.group,
+        examLabel: listeningModule.examLabel,
+        playOnce: listeningModule.playOnce,
+        voiceLang: listeningModule.voiceLang,
+        defaultRate: listeningModule.defaultRate,
       },
       answerKey: {
         answers: parsed.data.questions.map((item) => ({

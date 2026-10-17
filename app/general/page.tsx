@@ -26,7 +26,7 @@ type Topic = (typeof TOPICS)[number];
 type Difficulty = (typeof DIFFICULTIES)[number];
 type FeedbackPreference = (typeof FEEDBACK_OPTIONS)[number]["value"];
 
-function optionClassName(_selected: boolean) {
+function optionClassName() {
   return "ink-chip";
 }
 
@@ -59,7 +59,7 @@ export default function GeneralPage() {
                 key={item}
                 type="button"
                 aria-pressed={topic === item}
-                className={optionClassName(topic === item)}
+                className={optionClassName()}
                 onClick={() => setTopic(item)}
               >
                 {item}
@@ -76,7 +76,7 @@ export default function GeneralPage() {
                 key={item}
                 type="button"
                 aria-pressed={difficulty === item}
-                className={optionClassName(difficulty === item)}
+                className={optionClassName()}
                 onClick={() => setDifficulty(item)}
               >
                 {item}
@@ -93,7 +93,7 @@ export default function GeneralPage() {
                 key={item.value}
                 type="button"
                 aria-pressed={feedback === item.value}
-                className={`${optionClassName(feedback === item.value)} w-full text-left sm:justify-start`}
+                className={`${optionClassName()} w-full text-left sm:justify-start`}
                 onClick={() => setFeedback(item.value)}
               >
                 {item.label}
