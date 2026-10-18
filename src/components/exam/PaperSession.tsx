@@ -39,7 +39,7 @@ type PublicPaper = {
   completeWords?: { sentence: string; blanks: Array<{ id: string; prefix: string }> };
   dailyLife?: Array<{ title: string; body: string; questions: Question[] }>;
   academic?: { title: string; paragraphs: string[]; questions: Question[] };
-  task1?: { minutes: number; minimumWords: number; prompt: string; table: { columns: string[]; rows: string[][] } };
+  task1?: { minutes: number; minimumWords: number; prompt: string; kind?: string; table: { columns: string[]; rows: string[][] } };
   task2?: { minutes: number; minimumWords: number; prompt: string };
   sentences?: Array<{ id: string; speakerLine: string; tokens: string[] }>;
   email?: { minutes: number; scenario: string; points: string[] };
@@ -61,7 +61,7 @@ const RULES: Record<string, { title: string; titleZh: string; lines: string[] }>
     title: "IELTS Academic Writing",
     titleZh: "学术类写作",
     lines: [
-      "Task 1: describe the table, at least 150 words, about 20 minutes",
+      "Task 1: describe a table, chart, process, or map, at least 150 words, about 20 minutes",
       "Task 2: essay, at least 250 words, about 40 minutes",
       "60 minutes for both tasks",
       "Task 2 counts twice Task 1",
@@ -110,8 +110,8 @@ export function PaperSession({
   readingSet?: string;
 }) {
   const router = useRouter();
-  const sets = skill === "reading" ? readingSetsFor(exam) : [];
-  const [selectedSet, setSelectedSet] = useState(findReadingSet(exam, readingSet).id);
+  const sets = skill === "reading" && readingSet && readingSet !== "full" ? readingSetsFor(exam) : [];
+  const [selectedSet, setSelectedSet] = useState(readingSet && readingSet !== "full" ? findReadingSet(exam, readingSet).id : "");
   const activeSet = sets.find((item) => item.id === selectedSet) || sets[0];
   const rule = activeSet
     ? {
@@ -173,7 +173,7 @@ export function PaperSession({
       const response = await fetch("/api/v1/exam-papers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ examType: exam, skill, readingSet: activeSet?.id }),
+        body: JSON.stringify({ examType: exam, skill, readingSet: activeSet?.id || "full" }),
       });
       if (response.status === 401) {
         window.location.assign("/login");
@@ -304,7 +304,7 @@ export function PaperSession({
           </ul>
           {error ? <p className="ink-alert mt-4" role="alert">{error}</p> : null}
           <button type="button" className="ink-btn mt-6 w-full" disabled={phase === "creating"} onClick={() => void startPaper()}>
-            {phase === "creating" ? "正在出卷，大约十几秒..." : "Start · 开始"}
+            {phase === "creating" ? "正在出完整试卷，请稍等..." : "Start · 开始"}
           </button>
           <Link href="/exam" className="ink-btn-line mt-3 w-full">Back</Link>
         </section>
@@ -447,7 +447,9 @@ export function PaperSession({
           {skill === "writing" && paper?.task1 && paper.task2 ? (
             <section className="mt-4 flex flex-col gap-4">
               <article className="ink-card p-5">
-                <h2 className="text-lg font-semibold">Task 1 · {paper.task1.minimumWords} words</h2>
+                <h2 className="text-lg font-semibold">
+                  Task 1 · {paper.task1.kind || "table"} · {paper.task1.minimumWords} words
+                </h2>
                 <p className="mt-3 text-sm leading-7">{paper.task1.prompt}</p>
                 <div className="mt-4 overflow-x-auto">
                   <table className="w-full text-left text-sm">

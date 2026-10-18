@@ -31,6 +31,21 @@ type PublicContent = {
   defaultRate?: number;
   retryFrom?: string;
   compacted?: boolean;
+  fullPaper?: boolean;
+  partsTotal?: number;
+  parts?: ListeningPart[];
+};
+
+type ListeningPart = {
+  id: string;
+  label: string;
+  title: string;
+  instructions?: string;
+  script?: string;
+  scriptZh?: string;
+  questions: Question[];
+  voiceLang?: "en-GB" | "en-US";
+  defaultRate?: number;
 };
 
 type ResultDetail = {
@@ -67,6 +82,9 @@ function PracticeContent() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [partIndex, setPartIndex] = useState(0);
+  const [heard, setHeard] = useState<Record<number, boolean>>({});
+  const [preparing, setPreparing] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -155,6 +173,42 @@ function PracticeContent() {
   const content = session.publicContent;
   const submitted = session.status === "submitted";
   const mockExam = Boolean(content.playOnce);
+  const paperParts = content.fullPaper && !content.retryFrom ? content.parts || [] : null;
+  const activePart = paperParts ? paperParts[Math.min(partIndex, Math.max(paperParts.length - 1, 0))] : null;
+  const shownQuestions = paperParts && !submitted ? activePart?.questions || [] : content.questions || [];
+  const questionOffset =
+    paperParts && !submitted
+      ? paperParts.slice(0, partIndex).reduce((sum, part) => sum + part.questions.length, 0)
+      : 0;
+  const moreParts = Boolean(paperParts && content.partsTotal && paperParts.length < content.partsTotal);
+  const onLastReadyPart = Boolean(paperParts && !moreParts && partIndex >= paperParts.length - 1);
+
+  async function goNextPart() {
+    if (!paperParts || !id) {
+      return;
+    }
+    if (partIndex < paperParts.length - 1) {
+      setPartIndex((current) => current + 1);
+      return;
+    }
+    setPreparing(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/v1/listening/${id}/next`, { method: "POST" });
+      const result = (await response.json()) as { success?: boolean; data?: SessionPayload; error?: string };
+      if (!result.success || !result.data) {
+        setError(result.error || "下一部分还没准备好");
+        return;
+      }
+      const nextParts = result.data.publicContent.parts || [];
+      setSession(result.data);
+      setPartIndex(Math.max(0, nextParts.length - 1));
+    } catch {
+      setError("网络错误，请稍后重试");
+    } finally {
+      setPreparing(false);
+    }
+  }
   const result = session.result;
   const details = new Map((result?.details || []).map((item) => [item.id, item]));
 
@@ -189,20 +243,27 @@ function PracticeContent() {
       {!content.compacted ? (
         <div className="mt-6">
           <AudioPlayer
-            text={content.script || ""}
+            key={paperParts ? `${activePart?.id || partIndex}` : "single"}
+            text={(paperParts ? activePart?.script : content.script) || ""}
             playOnce={Boolean(content.playOnce)}
-            defaultRate={content.defaultRate}
-            voiceLang={content.voiceLang}
+            defaultRate={paperParts ? activePart?.defaultRate : content.defaultRate}
+            voiceLang={paperParts ? activePart?.voiceLang : content.voiceLang}
+            onPlayedOnce={() => setHeard((current) => ({ ...current, [partIndex]: true }))}
           />
         </div>
       ) : null}
 
       <form className="mt-8 flex flex-col gap-5" onSubmit={(event) => void handleSubmit(event)}>
-        {(content.questions || []).map((question, index) => {
+        {paperParts ? (
+          <p className="text-sm font-medium text-[#1C1917]">
+            {activePart?.label || `第 ${partIndex + 1} 段`} · {partIndex + 1}/{content.partsTotal || paperParts.length}
+          </p>
+        ) : null}
+        {shownQuestions.map((question, index) => {
           const detail = details.get(question.id);
           return (
             <article key={question.id} className="ink-card p-5">
-              <p className="text-xs text-[#8A8A8A]">Question {index + 1}</p>
+              <p className="text-xs text-[#8A8A8A]">Question {questionOffset + index + 1}</p>
               <p className="mt-2 font-medium">{question.prompt}</p>
               {mockExam ? null : <p className="mt-1 text-sm text-[#8A847C]">{question.promptZh}</p>}
 
@@ -279,9 +340,20 @@ function PracticeContent() {
         ) : null}
 
         {!submitted && !content.compacted ? (
-          <button type="submit" className="ink-btn" disabled={submitting}>
-            {submitting ? "正在判分..." : "提交答案"}
-          </button>
+          paperParts && !onLastReadyPart ? (
+            <button
+              type="button"
+              className="ink-btn"
+              disabled={preparing || !heard[partIndex]}
+              onClick={() => void goNextPart()}
+            >
+              {preparing ? "正在准备下一部分..." : heard[partIndex] ? "下一部分" : "先听完这一段"}
+            </button>
+          ) : (
+            <button type="submit" className="ink-btn" disabled={submitting || (Boolean(paperParts) && !heard[partIndex])}>
+              {submitting ? "正在判分..." : paperParts && !heard[partIndex] ? "先听完最后一段" : "提交答案"}
+            </button>
+          )
         ) : (
           <section className="ink-card p-5">
             <h2 className="text-lg font-semibold">
@@ -293,8 +365,20 @@ function PracticeContent() {
             ) : (
               <>
                 <p className="mt-4 text-xs text-[#8A8A8A]">听力原文</p>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-7">{content.script}</p>
-                <p className="mt-3 text-sm leading-7 text-[#6F6F6F]">{content.scriptZh}</p>
+                {content.parts && content.parts.length > 0 ? (
+                  content.parts.map((part) => (
+                    <div key={part.id} className="mt-4">
+                      <p className="text-sm font-medium">{part.label}</p>
+                      <p className="mt-2 whitespace-pre-wrap text-sm leading-7">{part.script}</p>
+                      {part.scriptZh ? <p className="mt-3 text-sm leading-7 text-[#6F6F6F]">{part.scriptZh}</p> : null}
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-7">{content.script}</p>
+                    <p className="mt-3 text-sm leading-7 text-[#6F6F6F]">{content.scriptZh}</p>
+                  </>
+                )}
               </>
             )}
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">

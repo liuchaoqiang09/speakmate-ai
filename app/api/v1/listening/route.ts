@@ -2,14 +2,14 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/src/lib/auth/authOptions";
-import { getListeningModule } from "@/src/lib/listening/modules";
+import { getListeningModule, getListeningPaper } from "@/src/lib/listening/modules";
 import {
   clearListeningHistory,
   createListeningSession,
   listListeningHistory,
 } from "@/src/lib/services/listeningService";
 
-export const maxDuration = 90;
+export const maxDuration = 120;
 
 const bodySchema = z.object({
   topic: z.string().min(1),
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   }
 
   const parsed = bodySchema.safeParse(json);
-  if (!parsed.success || !getListeningModule(parsed.data.topic)) {
+  if (!parsed.success || (!getListeningModule(parsed.data.topic) && !getListeningPaper(parsed.data.topic))) {
     return NextResponse.json({ success: false, error: "请选择听力模块" }, { status: 400 });
   }
 

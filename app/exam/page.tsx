@@ -3,8 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/src/components/shell/AppHeader";
-import { findReadingSet, readingSetsFor } from "@/src/lib/exam/readingSets";
-
 const EXAMS = [
   { value: "ielts", label: "IELTS" },
   { value: "toefl", label: "TOEFL" },
@@ -34,7 +32,6 @@ export default function ExamPage() {
   const router = useRouter();
   const [exam, setExam] = useState<ExamType>("ielts");
   const [part, setPart] = useState<Part>("part1");
-  const [readingSet, setReadingSet] = useState("passage1");
   const [history, setHistory] = useState<Array<{ label: string; score: string }>>([]);
 
   const parts = exam === "ielts" ? IELTS_PARTS : TOEFL_PARTS;
@@ -66,7 +63,6 @@ export default function ExamPage() {
   function handleSelectExam(nextExam: ExamType) {
     setExam(nextExam);
     setPart(nextExam === "ielts" ? "part1" : "listen_repeat");
-    setReadingSet(nextExam === "ielts" ? "passage1" : "complete_words");
   }
 
   function startVoice(mode: "practice" | "simulation") {
@@ -76,10 +72,11 @@ export default function ExamPage() {
 
   function startPaper(skill: "reading" | "writing") {
     const params = new URLSearchParams({ exam });
-    if (skill === "reading") {
-      params.set("set", readingSet);
-    }
     router.push(`/exam/${skill}?${params.toString()}`);
+  }
+
+  function startFullVoice() {
+    router.push(`/exam/voice?exam=${exam}&part=full&mode=simulation`);
   }
 
   return (
@@ -90,7 +87,7 @@ export default function ExamPage() {
         <p className="text-xs font-semibold tracking-[0.22em] text-[#0E7C66]">EXAM</p>
         <h1 className="mt-3 text-[32px] font-semibold tracking-tight text-[#1C1917]">IELTS & TOEFL</h1>
         <p className="mt-2 text-sm text-[#8A847C]">阅读、写作、口语</p>
-        <p className="mt-3 text-sm leading-6 text-[#6F6A63]">先选考试，再进入阅读、写作或口语</p>
+        <p className="mt-3 text-sm leading-6 text-[#6F6A63]">阅读、写作和口语的模拟模式都是一整场。口语练习模式仍可单练某一部分。</p>
 
         <fieldset className="mt-10">
           <legend className="text-sm font-medium text-[#1C1917]">Exam <span className="font-normal text-[#8A847C]">考试</span></legend>
@@ -109,23 +106,7 @@ export default function ExamPage() {
           </div>
         </fieldset>
 
-        <label className="mt-8 block text-sm font-medium text-[#1C1917]">
-          Reading <span className="font-normal text-[#8A847C]">文章</span>
-          <select
-            className="ink-input mt-2"
-            value={readingSet}
-            onChange={(event) => setReadingSet(event.target.value)}
-          >
-            {readingSetsFor(exam).map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label} · {item.labelZh}
-              </option>
-            ))}
-          </select>
-          <span className="mt-2 block font-normal leading-6 text-[#6F6A63]">{findReadingSet(exam, readingSet).types}</span>
-        </label>
-
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <button type="button" className="ink-btn w-full flex-1" onClick={() => startPaper("reading")}>
             Reading
           </button>
@@ -156,9 +137,9 @@ export default function ExamPage() {
             Practice with hints
             <span className="ml-2 text-xs font-normal text-white/80">练习模式</span>
           </button>
-          <button type="button" className="ink-btn-line w-full" onClick={() => startVoice("simulation")}>
+          <button type="button" className="ink-btn-line w-full" onClick={startFullVoice}>
             Full mock
-            <span className="ml-2 text-xs font-normal text-[#8A847C]">模拟模式</span>
+            <span className="ml-2 text-xs font-normal text-[#8A847C]">完整口语模考</span>
           </button>
         </div>
         {history.length > 0 ? (

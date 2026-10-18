@@ -11,7 +11,7 @@ const paramsSchema = z.object({
 });
 
 const bodySchema = z.object({
-  answers: z.record(z.string().max(80)).refine((answers) => Object.keys(answers).length <= 40, "答案过多"),
+  answers: z.record(z.string().max(80)).refine((answers) => Object.keys(answers).length <= 50, "答案过多"),
 });
 
 export async function POST(

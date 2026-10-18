@@ -40,12 +40,59 @@ function parseModelJson(raw: string): unknown {
   }
 }
 
+function prefixPassage(paper: IeltsReadingPaper, prefix: string): IeltsReadingPaper {
+  return {
+    passages: paper.passages.map((passage) => ({
+      ...passage,
+      questions: passage.questions.map((question) => ({ ...question, id: `${prefix}${question.id}` })),
+    })),
+  };
+}
+
 async function buildPaper(exam: PaperExam, skill: PaperSkill, readingSet?: string | null) {
+  if (exam === "ielts" && skill === "reading" && (!readingSet || readingSet === "full")) {
+    const pieces: IeltsReadingPaper[] = [];
+    const passageIds = ["passage1", "passage2", "passage3"] as const;
+    for (let index = 0; index < passageIds.length; index += 1) {
+      pieces.push(prefixPassage(await generateIeltsReading(passageIds[index]), `p${index + 1}-`));
+    }
+    const paper: IeltsReadingPaper = { passages: pieces.flatMap((item) => item.passages) };
+    return {
+      publicContent: {
+        ...stripReadingKey(exam, paper),
+        minutes: 60,
+        setLabel: "Full reading",
+        setLabelZh: "三篇完整阅读",
+        questionTypes: "40 questions across three passages",
+      },
+      answerKey: paper,
+    };
+  }
   if (exam === "ielts" && skill === "reading") {
     const set = findReadingSet(exam, readingSet);
     const paper = await generateIeltsReading(set.id);
     return {
       publicContent: { ...stripReadingKey(exam, paper), minutes: set.minutes, setLabel: set.label, setLabelZh: set.labelZh, questionTypes: set.types },
+      answerKey: paper,
+    };
+  }
+  if (exam === "toefl" && skill === "reading" && (!readingSet || readingSet === "full")) {
+    const words = await generateToeflReading("complete_words");
+    const daily = await generateToeflReading("daily_life");
+    const academic = await generateToeflReading("academic");
+    const paper: ToeflReadingPaper = {
+      completeWords: words.completeWords,
+      dailyLife: daily.dailyLife,
+      academic: academic.academic,
+    };
+    return {
+      publicContent: {
+        ...stripReadingKey(exam, paper),
+        minutes: 30,
+        setLabel: "Full reading",
+        setLabelZh: "阅读整场",
+        questionTypes: "Complete the Words, daily life, academic passage",
+      },
       answerKey: paper,
     };
   }
@@ -68,6 +115,9 @@ async function buildPaper(exam: PaperExam, skill: PaperSkill, readingSet?: strin
 function templateSetId(exam: PaperExam, skill: PaperSkill, readingSet?: string | null): string {
   if (skill === "writing") {
     return "writing";
+  }
+  if (!readingSet || readingSet === "full") {
+    return "full";
   }
   return findReadingSet(exam, readingSet).id;
 }

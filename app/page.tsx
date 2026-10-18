@@ -124,7 +124,7 @@ export default function Home() {
             textHref="/exam"
             textLabel="Reading and writing"
             textLabelZh="阅读和写作"
-            voiceHref="/exam/voice?exam=ielts&part=part1&mode=simulation"
+            voiceHref="/exam/voice?exam=ielts&part=full&mode=simulation"
             label="IELTS TOEFL 入口"
           />
 

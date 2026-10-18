@@ -9,6 +9,7 @@ type AudioPlayerProps = {
   defaultRate?: number;
   voiceLang?: "en-GB" | "en-US";
   hint?: string;
+  onPlayedOnce?: () => void;
 };
 
 function stripSpeakerLabels(text: string): string {
@@ -22,6 +23,7 @@ export function AudioPlayer({
   defaultRate = 0.9,
   voiceLang = "en-US",
   hint,
+  onPlayedOnce,
 }: AudioPlayerProps) {
   const [playing, setPlaying] = useState(false);
   const [rate, setRate] = useState(defaultRate);
@@ -70,10 +72,19 @@ export function AudioPlayer({
     utterance.rate = playOnce ? defaultRate : rate;
     utterance.onend = () => {
       setPlaying(false);
-      setPlays((current) => current + 1);
+      setPlays((current) => {
+        if (current < 1) {
+          onPlayedOnce?.();
+        }
+        return current + 1;
+      });
     };
     utterance.onerror = () => {
       setPlaying(false);
+      if (playOnce) {
+        setPlays(1);
+        onPlayedOnce?.();
+      }
     };
     utteranceRef.current = utterance;
     setPlaying(true);

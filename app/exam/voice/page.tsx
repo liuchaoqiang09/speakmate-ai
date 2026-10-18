@@ -104,7 +104,7 @@ function ExamVoiceContent() {
   const [repeatCount, setRepeatCount] = useState(0);
   const [answerCount, setAnswerCount] = useState(0);
   const roomRef = useRef<VoiceRoomHandle | null>(null);
-  const clockPhase = useRef<"prep" | "speak" | "run">("run");
+  const clockPhase = useRef<"prep" | "speak" | "run" | "part1" | "part3" | "repeat" | "interview">("run");
   const partKey = `${normalized.exam}:${normalized.part}:${practiceMode ? "practice" : "simulation"}`;
 
   const script = useMemo(
@@ -205,6 +205,29 @@ function ExamVoiceContent() {
     setClockSeconds(120);
   }, [clockSeconds, script?.clock]);
 
+  useEffect(() => {
+    if (script?.clock !== "ielts_full" || clockSeconds !== 0) {
+      return;
+    }
+    if (clockPhase.current === "part1") {
+      clockPhase.current = "prep";
+      setClockLabel("Part 2 prepare");
+      setClockSeconds(60);
+      return;
+    }
+    if (clockPhase.current === "prep") {
+      clockPhase.current = "speak";
+      setClockLabel("Part 2 speak");
+      setClockSeconds(120);
+      return;
+    }
+    if (clockPhase.current === "speak") {
+      clockPhase.current = "part3";
+      setClockLabel("Part 3");
+      setClockSeconds(300);
+    }
+  }, [clockSeconds, script?.clock]);
+
   function beginClock() {
     if (!script) {
       return;
@@ -215,6 +238,18 @@ function ExamVoiceContent() {
       clockPhase.current = "prep";
       setClockLabel("Prepare");
       setClockSeconds(60);
+      return;
+    }
+    if (script.clock === "ielts_full") {
+      clockPhase.current = "part1";
+      setClockLabel("Part 1");
+      setClockSeconds(300);
+      return;
+    }
+    if (script.clock === "toefl_full") {
+      clockPhase.current = "repeat";
+      setClockLabel("Listen and repeat");
+      setClockSeconds(null);
       return;
     }
     if (script.clock === "part1" || script.clock === "part3") {
@@ -238,8 +273,23 @@ function ExamVoiceContent() {
     if (!script) {
       return;
     }
-    if (script.clock === "repeat" && caption.role === "user") {
-      setRepeatCount((current) => Math.min(7, current + 1));
+    if ((script.clock === "repeat" || script.clock === "toefl_full") && caption.role === "user" && clockPhase.current !== "interview") {
+      setRepeatCount((current) => {
+        const next = Math.min(7, current + 1);
+        if (script.clock === "toefl_full" && next >= 7) {
+          clockPhase.current = "interview";
+          setClockLabel("Interview");
+          setClockSeconds(45);
+        }
+        return next;
+      });
+    }
+    if (script.clock === "toefl_full" && caption.role === "assistant" && clockPhase.current === "interview") {
+      setClockLabel("This answer");
+      setClockSeconds(45);
+    }
+    if (script.clock === "toefl_full" && caption.role === "user" && clockPhase.current === "interview") {
+      setAnswerCount((current) => Math.min(4, current + 1));
     }
     if (script.clock === "interview" && caption.role === "assistant") {
       setClockLabel("This answer");
@@ -357,6 +407,13 @@ function ExamVoiceContent() {
         </button>
       </header>
 
+      {normalized.part === "full" ? (
+        <p className="mt-4 text-sm text-[#6F6A63]">
+          {normalized.exam === "ielts"
+            ? "整场口语：Part 1、Part 2、Part 3 一次完成。Part 3 接着 Part 2 的题卡。"
+            : "整场口语：先听后复述 7 句，再完成 4 个访谈问题。"}
+        </p>
+      ) : (
       <div className="mt-4 flex flex-wrap gap-2">
         {EXAM_CHOICES.map((choice) => {
           const selected = choice.exam === normalized.exam && choice.part === normalized.part;
@@ -373,6 +430,7 @@ function ExamVoiceContent() {
           );
         })}
       </div>
+      )}
 
       <section className="ink-card mt-4 p-4">
         <p className="text-xs font-semibold tracking-[0.16em] text-[#0E7C66]">EXAMINER</p>
@@ -407,10 +465,10 @@ function ExamVoiceContent() {
           {clockDone || part2SpeakDone ? " · Time" : ""}
         </p>
       ) : null}
-      {script.clock === "repeat" ? (
+      {script.clock === "repeat" || script.clock === "toefl_full" ? (
         <p className="mt-4 text-sm font-medium text-[#0B6654]">Repeat {repeatCount} / 7</p>
       ) : null}
-      {script.clock === "interview" ? (
+      {script.clock === "interview" || script.clock === "toefl_full" ? (
         <p className="mt-2 text-sm text-[#6F6A63]">Answers {answerCount} / 4</p>
       ) : null}
 
@@ -421,7 +479,7 @@ function ExamVoiceContent() {
           sessionId={sessionId}
           onLive={beginClock}
           onDefiniteCaption={handleCaption}
-          deferAssistantText={script.clock === "repeat"}
+          deferAssistantText={script.clock === "repeat" || script.clock === "toefl_full"}
         />
       </div>
 

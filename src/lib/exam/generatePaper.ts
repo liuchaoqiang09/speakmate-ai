@@ -191,7 +191,7 @@ function repairPassage(value: unknown): unknown {
     .map(repairQuestion)
     .filter((item): item is Record<string, unknown> => Boolean(item))
     .filter((item) => item.type !== "matching_heading" || headingIds.has(String(item.answer)))
-    .slice(0, 12);
+    .slice(0, 14);
   return {
     passages: [
       {
@@ -257,9 +257,12 @@ function repairToefl(setId: string, value: unknown): unknown {
 }
 
 const IELTS_SET_PROMPT: Record<string, string> = {
-  passage1: "Difficulty: easier factual article. Questions: 4 type true_false_not_given with answer True, False, or Not Given. 3 type completion with wordLimit 2 and a _____ blank. 3 type multiple_choice with exactly 4 options. No headings.",
-  passage2: "Difficulty: medium explanatory article. Include headings with ids i, ii, iii, iv, v, vi and two of them unused. Questions: 4 type matching_heading whose answer is a heading id and paragraph is A, B, C, or D. 3 type yes_no_not_given with answer Yes, No, or Not Given. 3 type multiple_choice with exactly 4 options.",
-  passage3: "Difficulty: harder argument article. Questions: 4 type yes_no_not_given with answer Yes, No, or Not Given. 3 type completion for a summary, wordLimit 2, prompt contains _____. 3 type multiple_choice with exactly 4 options. No headings.",
+  passage1:
+    "Difficulty: easier factual article. Questions exactly 13: 5 type true_false_not_given with answer True, False, or Not Given. 4 type completion with wordLimit 2 and a _____ blank. 4 type multiple_choice with exactly 4 options. No headings.",
+  passage2:
+    "Difficulty: medium explanatory article. Include headings with ids i, ii, iii, iv, v, vi, vii and two of them unused. Questions exactly 13: 5 type matching_heading whose answer is a heading id and paragraph is A, B, C, D, E, or F. 4 type yes_no_not_given with answer Yes, No, or Not Given. 4 type multiple_choice with exactly 4 options.",
+  passage3:
+    "Difficulty: harder argument article. Questions exactly 14: 5 type yes_no_not_given with answer Yes, No, or Not Given. 4 type completion for a summary, wordLimit 2, prompt contains _____. 5 type multiple_choice with exactly 4 options. No headings.",
 };
 
 export async function generateIeltsReading(setId = "passage1"): Promise<IeltsReadingPaper> {
@@ -267,7 +270,7 @@ export async function generateIeltsReading(setId = "passage1"): Promise<IeltsRea
   return askValid(
     [
       "Write ONE original IELTS Academic Reading passage. Do not copy a published test.",
-      "4 paragraphs labeled A B C D. Each paragraph is 80 to 120 words.",
+      "6 paragraphs labeled A B C D E F. Each paragraph is 110 to 140 words.",
       brief,
       "Every multiple_choice answer must be copied exactly from its options.",
       "Return JSON: { title, paragraphs: [{label, text}], headings?: [{id, text}], questions: [{id, type, prompt, options?, wordLimit?, paragraph?, answer}] }",
@@ -300,7 +303,7 @@ function cellText(value: unknown): string {
   return asText(value);
 }
 
-function repairIeltsWriting(value: unknown): unknown {
+function repairIeltsWriting(kind: "table" | "chart" | "process" | "map", value: unknown): unknown {
   const root = asRecord(value);
   if (!root) {
     return value;
@@ -314,22 +317,31 @@ function repairIeltsWriting(value: unknown): unknown {
     .slice(0, 6);
   const task2 = asRecord(root.task2) || (typeof root.task2 === "string" ? { prompt: root.task2 } : {});
   return {
-    task1: { prompt: asText(task1.prompt), table: { columns, rows } },
+    task1: { kind, prompt: asText(task1.prompt), table: { columns, rows } },
     task2: { prompt: asText(task2.prompt) },
   };
 }
 
 export async function generateIeltsWriting(): Promise<IeltsWritingPaper> {
+  const kinds = ["table", "chart", "process", "map"] as const;
+  const kind = kinds[Math.floor(Math.random() * kinds.length)];
+  const task1Brief: Record<(typeof kinds)[number], string> = {
+    table: "Task 1 is a table. 3 columns and 4 rows of simple numbers. The prompt says summarise the information and make comparisons.",
+    chart: "Task 1 is a bar chart shown as a data table. 3 columns (category plus two years or groups) and 4 rows of numbers. The prompt says summarise the chart and make comparisons.",
+    process: "Task 1 is a process. The table columns are Stage and What happens. 4 to 6 rows in order. The prompt says describe the stages of the process.",
+    map: "Task 1 is a map comparison. The table columns are Place, Before, and After. 4 rows. The prompt says describe the changes to the place.",
+  };
   return askValid(
     [
       "Write an original IELTS Academic Writing paper.",
-      "Task 1: the candidate must describe a table in at least 150 words. Include a table with 3 columns and 4 rows of simple numbers. The prompt tells them to summarise the information and make comparisons.",
+      task1Brief[kind],
+      "Task 1 requires at least 150 words.",
       "Task 2: one essay question that asks for an opinion and reasons, at least 250 words.",
       "Do not copy published questions.",
       "JSON: { task1: { prompt, table: { columns, rows } }, task2: { prompt } }",
     ].join("\n"),
     ieltsWritingSchema,
-    repairIeltsWriting
+    (value) => repairIeltsWriting(kind, value)
   );
 }
 

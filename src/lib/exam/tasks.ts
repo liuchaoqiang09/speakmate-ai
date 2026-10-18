@@ -4,6 +4,7 @@ export type ExamPartId =
   | "part1"
   | "part2"
   | "part3"
+  | "full"
   | "listen_repeat"
   | "interview"
   | "task1";
@@ -105,7 +106,7 @@ export type ExamTaskScript = {
   announcement: string;
   welcome: string;
   systemRole: string;
-  clock: "part1" | "part2" | "part3" | "repeat" | "interview";
+  clock: "part1" | "part2" | "part3" | "repeat" | "interview" | "ielts_full" | "toefl_full";
 };
 
 function stableIndex(seed: string, size: number): number {
@@ -119,8 +120,11 @@ function stableIndex(seed: string, size: number): number {
 export function normalizeExamPart(exam: string, part: string): { exam: ExamId; part: Exclude<ExamPartId, "task1"> } | null {
   const examId = exam.trim().toLowerCase();
   const partId = part.trim().toLowerCase();
-  if (examId === "ielts" && (partId === "part1" || partId === "part2" || partId === "part3")) {
+  if (examId === "ielts" && (partId === "part1" || partId === "part2" || partId === "part3" || partId === "full")) {
     return { exam: "ielts", part: partId };
+  }
+  if (examId === "toefl" && partId === "full") {
+    return { exam: "toefl", part: "full" };
   }
   if (examId === "toefl" && (partId === "listen_repeat" || partId === "interview")) {
     return { exam: "toefl", part: partId };
@@ -149,6 +153,69 @@ export function buildExamTask(exam: string, part: string, seed: string): ExamTas
     "Do not discuss pronunciation or accent.",
     "Keep a calm examiner tone.",
   ].join(" ");
+
+  if (normalized.part === "full" && normalized.exam === "ielts") {
+    const card = CUE_CARDS[stableIndex(seed, CUE_CARDS.length)];
+    const spokenCard = formatCard(card);
+    const followUps = [
+      `Why do people care about this: ${card.title}?`,
+      "Is this more important now than it was in the past?",
+      "Do younger and older people see this differently?",
+      "Should schools or communities do more about it? Why?",
+    ];
+    const welcome =
+      "This is the full IELTS Speaking test. Part 1 is about you. Then Part 2 is a long turn. Part 3 asks wider questions about the same topic. Let's begin. Do you work, or are you a student?";
+    return {
+      exam: "ielts",
+      part: "full",
+      heading: "IELTS Speaking",
+      headingZh: "口语整场",
+      limit: "Part 1 about 5 minutes · Part 2 prepare 1, speak 2 · Part 3 about 5 minutes",
+      limitZh: "Part 1 约 5 分钟，Part 2 准备 1 分钟、说 2 分钟，Part 3 约 5 分钟",
+      announcement: `${welcome} Part 2 card: ${spokenCard}`,
+      welcome,
+      clock: "ielts_full",
+      systemRole: [
+        shared,
+        "This is one continuous IELTS Speaking test: Part 1, then Part 2, then Part 3.",
+        "Part 1: ask short questions about home, work or study, and familiar habits. One question at a time. About five minutes.",
+        "Then say Part 1 is finished and move to Part 2.",
+        `Read this cue card once: ${spokenCard}. Give one minute of silence to prepare. Then let the candidate speak for up to two minutes. Ask one short rounding-off question.`,
+        "Then start Part 3 on the SAME topic as the cue card. Ask these questions in order, one at a time:",
+        followUps.map((question, index) => `${index + 1}. ${question}`).join(" "),
+        "After the fourth Part 3 answer, say the speaking test is complete and stop.",
+        "Do not restart, and do not skip a part.",
+      ].join(" "),
+    };
+  }
+
+  if (normalized.part === "full" && normalized.exam === "toefl") {
+    const interview = INTERVIEWS[stableIndex(seed, INTERVIEWS.length)];
+    const lines = REPEAT_SENTENCES.map((sentence, index) => `${index + 1}. ${sentence}`).join(" ");
+    const welcome = `This is the full TOEFL Speaking test. First, listen and repeat seven sentences. Then take a short interview. Sentence one. ${REPEAT_SENTENCES[0]}`;
+    return {
+      exam: "toefl",
+      part: "full",
+      heading: "TOEFL Speaking",
+      headingZh: "口语整场",
+      limit: "7 sentences to repeat, then 4 interview answers of about 45 seconds",
+      limitZh: "先复述 7 句，再回答 4 个访谈问题，每题约 45 秒",
+      announcement: welcome,
+      welcome,
+      clock: "toefl_full",
+      systemRole: [
+        shared,
+        "This is one continuous TOEFL Speaking test: Listen and Repeat, then Take an Interview.",
+        "First say these seven sentences in order, one at a time, and wait for an exact repeat.",
+        lines,
+        "After the seventh repeat, start the interview without a break.",
+        `The scene is ${interview.scene}.`,
+        "Ask these four questions in order, one at a time.",
+        interview.questions.map((question, index) => `${index + 1}. ${question}`).join(" "),
+        "After the fourth answer, say the speaking test is complete and stop.",
+      ].join(" "),
+    };
+  }
 
   if (normalized.part === "part1") {
     const welcome =

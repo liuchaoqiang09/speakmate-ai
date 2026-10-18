@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { AppHeader } from "@/src/components/shell/AppHeader";
 import { WaitHint } from "@/src/components/shell/WaitHint";
 import {
+  getListeningPaper,
   LISTENING_GROUPS,
   LISTENING_LEVELS,
   LISTENING_MODULES,
@@ -15,7 +16,7 @@ import {
 export default function ListeningSetupPage() {
   const router = useRouter();
   const [group, setGroup] = useState<ListeningGroup>("ielts");
-  const [topic, setTopic] = useState("ielts_s1");
+  const [topic, setTopic] = useState("campus");
   const [difficulty, setDifficulty] = useState<(typeof LISTENING_LEVELS)[number]["id"]>("初级");
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
@@ -26,9 +27,13 @@ export default function ListeningSetupPage() {
   );
   const selected = modules.find((item) => item.id === topic) || modules[0];
   const exam = group !== "daily";
+  const paper = getListeningPaper(
+    group === "ielts" ? "ielts_paper" : group === "toefl" ? "toefl_paper" : group === "cet4" ? "cet4_paper" : group === "cet6" ? "cet6_paper" : ""
+  );
 
   async function start() {
-    if (!selected) {
+    const startTopic = exam ? paper?.id : selected?.id;
+    if (!startTopic) {
       return;
     }
     setStarting(true);
@@ -37,7 +42,7 @@ export default function ListeningSetupPage() {
       const response = await fetch("/api/v1/listening", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: selected.id, difficulty }),
+        body: JSON.stringify({ topic: startTopic, difficulty }),
       });
       if (response.status === 401) {
         router.replace("/login");
@@ -61,7 +66,12 @@ export default function ListeningSetupPage() {
   }
 
   if (starting) {
-    return <WaitHint title="正在出卷" detail="听力材料和题目大约半分钟，请不要离开这一页。" />;
+    return (
+      <WaitHint
+        title="正在出卷"
+        detail={exam ? "先准备第一部分。后面几段会在你听的时候继续写好。" : "听力材料和题目大约半分钟，请不要离开这一页。"}
+      />
+    );
   }
 
   return (
@@ -73,7 +83,7 @@ export default function ListeningSetupPage() {
         <h1 className="mt-3 text-[32px] font-semibold tracking-tight">听力训练</h1>
         <p className="mt-2 text-sm text-[#8A847C]">Exam-style sections</p>
         <p className="mt-3 text-sm leading-6 text-[#6F6A63]">
-          按真实考试分区练：雅思 Section 1–4、托福对话/讲座、四六级新闻/长对话/短文/讲座。录音只放一遍，题型和难度跟该部分绑定。
+          考试听力按整场进行：雅思 4 个 Section、托福对话加讲座、四六级完整题量。每段只放一遍，全部听完再交卷。日常听力仍是一段一段练。
         </p>
 
         <fieldset className="mt-10">
@@ -99,33 +109,35 @@ export default function ListeningSetupPage() {
           </div>
         </fieldset>
 
-        <fieldset className="mt-8">
-          <legend className="text-sm font-medium">{exam ? "试卷部分" : "场景"}</legend>
-          <div className="mt-3 flex flex-wrap gap-3">
-            {modules.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className="ink-chip"
-                aria-pressed={selected?.id === item.id}
-                onClick={() => setTopic(item.id)}
-              >
-                {item.labelZh}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        {exam && paper ? (
+          <section className="mt-8 rounded-2xl bg-[#F7F7F5] p-4 text-sm leading-6 text-[#6F6A63]">
+            <p className="font-medium text-[#1C1917]">{paper.examLabel}</p>
+            <p className="mt-2">{paper.rulesZh}</p>
+            <p className="mt-2 text-xs text-[#8A8A8A]">{paper.slots.length} 段 · 录音只放一遍</p>
+          </section>
+        ) : (
+          <fieldset className="mt-8">
+            <legend className="text-sm font-medium">场景</legend>
+            <div className="mt-3 flex flex-wrap gap-3">
+              {modules.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className="ink-chip"
+                  aria-pressed={selected?.id === item.id}
+                  onClick={() => setTopic(item.id)}
+                >
+                  {item.labelZh}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
 
-        {selected ? (
+        {!exam && selected ? (
           <section className="mt-8 rounded-2xl bg-[#F7F7F5] p-4 text-sm leading-6 text-[#6F6A63]">
             <p className="font-medium text-[#1C1917]">{selected.examLabel}</p>
             <p className="mt-2">{selected.rulesZh}</p>
-            <p className="mt-2 text-xs text-[#8A8A8A]">
-              难度：{selected.difficulty}
-              {exam ? "（由该部分决定，不能自选）" : "（日常听力可自选）"} · {selected.questionsMin}
-              {selected.questionsMin === selected.questionsMax ? "" : `–${selected.questionsMax}`} 题 ·{" "}
-              {selected.voiceLang === "en-GB" ? "英音" : "美音"}
-            </p>
           </section>
         ) : null}
 

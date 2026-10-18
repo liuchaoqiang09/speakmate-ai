@@ -118,17 +118,17 @@ export const LISTENING_MODULES: ListeningModule[] = [
     playOnce: true,
     voiceLang: "en-GB",
     defaultRate: 0.95,
-    questionsMin: 8,
+    questionsMin: 10,
     questionsMax: 10,
     prompt: [
       "Write ONE IELTS Academic Listening Section 1 item. Inspired by IELTS, NOT an official paper.",
       "Audio: a transactional conversation between TWO speakers (phone or face-to-face): booking, joining a club, lost property, or accommodation.",
       "British or Australian everyday English. Concrete facts: names (spell one name), phone/postcode, time, price, date.",
-      "script: 180 to 240 words, labeled as Clerk: and Customer: or similar.",
+      "script: 260 to 340 words, labeled as Clerk: and Customer: or similar.",
       "Difficulty: easiest IELTS section. Clear numbers and spellings. One small distractor (speaker corrects a time).",
-      "questions: exactly 8.",
-      "q1-q6 type gap. prompt is a form line like 'Membership fee: ______'. Answer ONE WORD AND/OR A NUMBER taken from the script.",
-      "q7-q8 type choice with exactly 3 options A) B) C) (IELTS three-option MCQ).",
+      "questions: exactly 10.",
+      "q1-q7 type gap. prompt is a form line like 'Membership fee: ______'. Answer ONE WORD AND/OR A NUMBER taken from the script.",
+      "q8-q10 type choice with exactly 3 options A) B) C).",
       "instructions: Complete the form. Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
     ].join(" "),
   },
@@ -144,16 +144,16 @@ export const LISTENING_MODULES: ListeningModule[] = [
     playOnce: true,
     voiceLang: "en-GB",
     defaultRate: 1,
-    questionsMin: 8,
+    questionsMin: 10,
     questionsMax: 10,
     prompt: [
       "Write ONE IELTS Academic Listening Section 2 item. Inspired by IELTS, NOT an official paper.",
       "Audio: ONE speaker monologue: a guided tour, local event, museum, sports centre, or volunteer project.",
-      "script: 200 to 260 words. Use a host voice, no dialogue labels except optional 'Guide:'.",
+      "script: 280 to 360 words. Use a host voice, no dialogue labels except optional 'Guide:'.",
       "Difficulty: IELTS Section 2. Natural pace, one contrast (old vs new / this year vs last year).",
-      "questions: exactly 8.",
-      "q1-q4 type gap, NO MORE THAN TWO WORDS AND/OR A NUMBER.",
-      "q5-q8 type choice with exactly 3 options A) B) C), matching places/features to statements.",
+      "questions: exactly 10.",
+      "q1-q5 type gap, NO MORE THAN TWO WORDS AND/OR A NUMBER.",
+      "q6-q10 type choice with exactly 3 options A) B) C), matching places/features to statements.",
       "instructions: Complete the notes. Write NO MORE THAN TWO WORDS AND/OR A NUMBER.",
     ].join(" "),
   },
@@ -169,14 +169,14 @@ export const LISTENING_MODULES: ListeningModule[] = [
     playOnce: true,
     voiceLang: "en-GB",
     defaultRate: 1,
-    questionsMin: 8,
+    questionsMin: 10,
     questionsMax: 10,
     prompt: [
       "Write ONE IELTS Academic Listening Section 3 item. Inspired by IELTS, NOT an official paper.",
       "Audio: academic discussion, TWO or THREE speakers (two students and optionally a tutor) about a project, presentation, survey, or dissertation.",
-      "script: 220 to 280 words. Label speakers Tutor:, Lisa:, Tom: etc.",
+      "script: 300 to 380 words. Label speakers Tutor:, Lisa:, Tom: etc.",
       "Difficulty: IELTS Section 3. Speakers disagree, hedge, and change their minds. Academic but spoken.",
-      "questions: exactly 8.",
+      "questions: exactly 10.",
       "All questions type choice with exactly 3 options A) B) C).",
       "Cover: who will do what, a problem they found, a method, and a tutor's advice.",
       "Do not make answers obvious from the question wording.",
@@ -195,14 +195,14 @@ export const LISTENING_MODULES: ListeningModule[] = [
     playOnce: true,
     voiceLang: "en-GB",
     defaultRate: 1.02,
-    questionsMin: 8,
+    questionsMin: 10,
     questionsMax: 10,
     prompt: [
       "Write ONE IELTS Academic Listening Section 4 item. Inspired by IELTS, NOT an official paper.",
       "Audio: an academic lecture by ONE professor on biology, history, environment, psychology, or technology.",
-      "script: 240 to 320 words. Lecture English with signposting (first / however / in conclusion).",
+      "script: 320 to 420 words. Lecture English with signposting (first / however / in conclusion).",
       "Difficulty: hardest IELTS listening section. Dense facts, two examples, one unexpected finding.",
-      "questions: exactly 8, all type gap.",
+      "questions: exactly 10, all type gap.",
       "Each prompt is a lecture-note heading plus a gap, like 'Main cause of decline: ______'.",
       "Answers are 1 or 2 words AND/OR a number from the lecture. No more than TWO WORDS.",
       "instructions: Complete the notes. Write NO MORE THAN TWO WORDS AND/OR A NUMBER.",
@@ -417,6 +417,87 @@ export const LISTENING_TOPICS = LISTENING_MODULES.map((item) => ({
 
 export type ListeningTopicId = (typeof LISTENING_MODULES)[number]["id"];
 
+export type ListeningPaperSlot = {
+  moduleId: string;
+  questions?: number;
+};
+
+export type ListeningPaper = {
+  id: string;
+  group: Exclude<ListeningGroup, "daily">;
+  labelZh: string;
+  examLabel: string;
+  rulesZh: string;
+  slots: ListeningPaperSlot[];
+};
+
+export const LISTENING_PAPERS: ListeningPaper[] = [
+  {
+    id: "ielts_paper",
+    group: "ielts",
+    labelZh: "雅思听力整卷",
+    examLabel: "IELTS Listening",
+    rulesZh: "Section 1 到 4 连着考，每部分 10 题，共 40 题。每段录音只放一遍，不能回头重听。四段都听完再交卷。",
+    slots: [
+      { moduleId: "ielts_s1", questions: 10 },
+      { moduleId: "ielts_s2", questions: 10 },
+      { moduleId: "ielts_s3", questions: 10 },
+      { moduleId: "ielts_s4", questions: 10 },
+    ],
+  },
+  {
+    id: "toefl_paper",
+    group: "toefl",
+    labelZh: "托福听力整卷",
+    examLabel: "TOEFL Listening",
+    rulesZh: "2 段校园对话（各 5 题）和 3 段讲座（各 6 题）按顺序听。每段只放一遍，全部听完再交卷。",
+    slots: [
+      { moduleId: "toefl_conversation", questions: 5 },
+      { moduleId: "toefl_conversation", questions: 5 },
+      { moduleId: "toefl_lecture", questions: 6 },
+      { moduleId: "toefl_lecture", questions: 6 },
+      { moduleId: "toefl_lecture", questions: 6 },
+    ],
+  },
+  {
+    id: "cet4_paper",
+    group: "cet4",
+    labelZh: "四级听力整卷",
+    examLabel: "CET-4 Listening",
+    rulesZh: "3 条新闻（2+2+3 题）、2 段长对话（各 4 题）、3 篇短文（3+4+3 题），共 25 题。只放一遍，按顺序听完再交卷。",
+    slots: [
+      { moduleId: "cet4_news", questions: 2 },
+      { moduleId: "cet4_news", questions: 2 },
+      { moduleId: "cet4_news", questions: 3 },
+      { moduleId: "cet4_conversation", questions: 4 },
+      { moduleId: "cet4_conversation", questions: 4 },
+      { moduleId: "cet4_passage", questions: 3 },
+      { moduleId: "cet4_passage", questions: 4 },
+      { moduleId: "cet4_passage", questions: 3 },
+    ],
+  },
+  {
+    id: "cet6_paper",
+    group: "cet6",
+    labelZh: "六级听力整卷",
+    examLabel: "CET-6 Listening",
+    rulesZh: "2 段长对话（各 4 题）、2 篇短文（3+4 题）、3 段讲座（3+3+4 题），共 25 题。只放一遍，按顺序听完再交卷。",
+    slots: [
+      { moduleId: "cet6_conversation", questions: 4 },
+      { moduleId: "cet6_conversation", questions: 4 },
+      { moduleId: "cet6_passage", questions: 3 },
+      { moduleId: "cet6_passage", questions: 4 },
+      { moduleId: "cet6_lecture", questions: 3 },
+      { moduleId: "cet6_lecture", questions: 3 },
+      { moduleId: "cet6_lecture", questions: 4 },
+    ],
+  },
+];
+
+export function getListeningPaper(id: string): ListeningPaper | undefined {
+  return LISTENING_PAPERS.find((item) => item.id === id);
+}
+
 export function getListeningModule(id: string): ListeningModule | undefined {
   if (id === "cet4") {
     return LISTENING_MODULES.find((item) => item.id === "cet4_conversation");
@@ -428,6 +509,10 @@ export function getListeningModule(id: string): ListeningModule | undefined {
 }
 
 export function listeningTopicLabel(topic: string): string {
+  const paper = getListeningPaper(topic);
+  if (paper) {
+    return paper.examLabel;
+  }
   const listeningModule = getListeningModule(topic);
   if (!listeningModule) {
     return topic;

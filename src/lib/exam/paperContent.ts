@@ -108,6 +108,7 @@ const tableSchema = z.object({
 export const ieltsWritingSchema = z.object({
   task1: z.object({
     prompt: z.string().trim().min(20),
+    kind: z.enum(["table", "chart", "process", "map"]).optional(),
     table: tableSchema,
   }),
   task2: z.object({
@@ -383,7 +384,13 @@ export function stripWritingKey(exam: "ielts" | "toefl", paper: IeltsWritingPape
       exam,
       skill: "writing" as const,
       minutes: 60,
-      task1: { minutes: 20, minimumWords: 150, prompt: source.task1.prompt, table: source.task1.table },
+      task1: {
+        minutes: 20,
+        minimumWords: 150,
+        prompt: source.task1.prompt,
+        kind: source.task1.kind || "table",
+        table: source.task1.table,
+      },
       task2: { minutes: 40, minimumWords: 250, prompt: source.task2.prompt },
     };
   }

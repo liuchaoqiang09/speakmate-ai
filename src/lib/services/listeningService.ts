@@ -3,9 +3,11 @@ import { callDeepSeek } from "@/src/lib/ai/deepseek";
 import { prisma } from "@/src/lib/db/prisma";
 import {
   getListeningModule,
+  getListeningPaper,
   isExamListening,
   listeningTopicLabel,
   type ListeningModule,
+  type ListeningPaperSlot,
 } from "@/src/lib/listening/modules";
 import { scheduleRetentionPurge } from "@/src/lib/services/retentionService";
 
@@ -136,21 +138,52 @@ function adviceFor(topic: string, allCorrect: boolean): string {
   return "对照原文看错题：数字、专有名词、说话人改口。考试听力只放一遍，先改完再重听错过的题。";
 }
 
-export async function createListeningSession(userId: string, topic: string, difficulty: string) {
-  const listeningModule = getListeningModule(topic);
-  if (!listeningModule) {
-    return { success: false as const, error: "请选择听力模块", status: 400 };
-  }
+type GeneratedClip = z.infer<typeof generatedSchema>;
+
+type StoredPart = {
+  id: string;
+  label: string;
+  title: string;
+  titleZh: string;
+  instructions?: string;
+  instructionsZh?: string;
+  script: string;
+  scriptZh: string;
+  questions: Array<{
+    id: string;
+    type: string;
+    prompt: string;
+    promptZh: string;
+    options: string[];
+  }>;
+  voiceLang: "en-GB" | "en-US";
+  defaultRate: number;
+};
+
+const partBuilds = new Map<
+  string,
+  Promise<{ success: true; data: unknown } | { success: false; error: string; status: number }>
+>();
+
+async function generateClip(
+  listeningModule: ListeningModule,
+  level: string,
+  questionCount?: number
+): Promise<{ success: true; data: GeneratedClip } | { success: false; error: string; status: number }> {
   const exam = isExamListening(listeningModule.id);
-  const level = exam ? listeningModule.difficulty : difficulty || listeningModule.difficulty;
+  const min = questionCount ?? listeningModule.questionsMin;
+  const max = questionCount ?? listeningModule.questionsMax;
   const prompt = [
     "Return STRICT JSON only. No markdown.",
     exam ? listeningModule.prompt : dailyPrompt(listeningModule.id, level),
+    questionCount ? `Override: questions must be exactly ${questionCount}.` : "",
     "Do not put the correct answer in the prompt text.",
     "Every question needs prompt, prompt_zh, explanation, explanation_zh.",
-    `Number of questions must be between ${listeningModule.questionsMin} and ${listeningModule.questionsMax}.`,
+    `Number of questions must be between ${min} and ${max}.`,
     JSON.stringify(exampleShape(listeningModule, exam)),
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const ai = await callDeepSeek(
     [
@@ -161,7 +194,7 @@ export async function createListeningSession(userId: string, topic: string, diff
   );
 
   if (!ai.success || !ai.data) {
-    return { success: false as const, error: ai.error || "听力材料生成失败", status: 502 };
+    return { success: false, error: ai.error || "听力材料生成失败", status: 502 };
   }
 
   let parsedJson: unknown;
@@ -170,19 +203,69 @@ export async function createListeningSession(userId: string, topic: string, diff
     const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
     parsedJson = JSON.parse(fenced?.[1]?.trim() || raw);
   } catch {
-    return { success: false as const, error: "听力材料格式无效", status: 502 };
+    return { success: false, error: "听力材料格式无效", status: 502 };
   }
 
   const parsed = generatedSchema.safeParse(parsedJson);
   if (!parsed.success) {
-    return { success: false as const, error: "听力题目结构无效", status: 502 };
+    return { success: false, error: "听力题目结构无效", status: 502 };
   }
-  if (
-    parsed.data.questions.length < listeningModule.questionsMin ||
-    parsed.data.questions.length > listeningModule.questionsMax
-  ) {
-    return { success: false as const, error: "听力题目数量不符合该考试部分", status: 502 };
+  if (parsed.data.questions.length < min || parsed.data.questions.length > max) {
+    return { success: false, error: "听力题目数量不符合该考试部分", status: 502 };
   }
+  return { success: true, data: parsed.data };
+}
+
+function clipToPart(clip: GeneratedClip, listeningModule: ListeningModule, partId: string, questionPrefix: string): {
+  part: StoredPart;
+  answers: AnswerRow[];
+} {
+  const questions = clip.questions.map((item, index) => ({
+    id: `${questionPrefix}q${index + 1}`,
+    type: item.type === "matching" ? "choice" : item.type,
+    prompt: item.prompt,
+    promptZh: item.prompt_zh,
+    options: item.options || [],
+  }));
+  return {
+    part: {
+      id: partId,
+      label: listeningModule.labelZh,
+      title: clip.title,
+      titleZh: clip.title_zh,
+      instructions: clip.instructions || listeningModule.rulesZh,
+      instructionsZh: clip.instructions_zh || listeningModule.rulesZh,
+      script: clip.script,
+      scriptZh: clip.script_zh,
+      questions,
+      voiceLang: listeningModule.voiceLang,
+      defaultRate: listeningModule.defaultRate,
+    },
+    answers: clip.questions.map((item, index) => ({
+      id: `${questionPrefix}q${index + 1}`,
+      answer: item.answer.trim(),
+      explanation: item.explanation,
+      explanationZh: item.explanation_zh,
+    })),
+  };
+}
+
+export async function createListeningSession(userId: string, topic: string, difficulty: string) {
+  const paper = getListeningPaper(topic);
+  if (paper) {
+    return createListeningPaper(userId, paper.id);
+  }
+  const listeningModule = getListeningModule(topic);
+  if (!listeningModule) {
+    return { success: false as const, error: "请选择听力模块", status: 400 };
+  }
+  const exam = isExamListening(listeningModule.id);
+  const level = exam ? listeningModule.difficulty : difficulty || listeningModule.difficulty;
+  const generated = await generateClip(listeningModule, level);
+  if (!generated.success) {
+    return generated;
+  }
+  const parsed = { data: generated.data };
 
   const publicQuestions = parsed.data.questions.map((item) => ({
     id: item.id,
@@ -233,6 +316,125 @@ export async function createListeningSession(userId: string, topic: string, diff
   return { success: true as const, data: hideScriptTranslation(created) };
 }
 
+async function createListeningPaper(userId: string, paperId: string) {
+  const paper = getListeningPaper(paperId);
+  const first = paper?.slots[0];
+  const listeningModule = first ? getListeningModule(first.moduleId) : undefined;
+  if (!paper || !first || !listeningModule) {
+    return { success: false as const, error: "请选择听力模块", status: 400 };
+  }
+  const generated = await generateClip(listeningModule, listeningModule.difficulty, first.questions);
+  if (!generated.success) {
+    return generated;
+  }
+  const built = clipToPart(generated.data, listeningModule, "part-1", "p1-");
+  const created = await prisma.listeningSession.create({
+    data: {
+      userId,
+      topic: paper.id,
+      difficulty: listeningModule.difficulty,
+      publicContent: {
+        fullPaper: true,
+        title: paper.examLabel,
+        titleZh: paper.labelZh,
+        examLabel: paper.examLabel,
+        instructions: paper.rulesZh,
+        playOnce: true,
+        format: paper.group,
+        partsTotal: paper.slots.length,
+        parts: [built.part],
+        questions: built.part.questions,
+        script: built.part.script,
+        scriptZh: built.part.scriptZh,
+        voiceLang: listeningModule.voiceLang,
+        defaultRate: listeningModule.defaultRate,
+      },
+      answerKey: {
+        answers: built.answers,
+        pending: paper.slots.slice(1),
+      },
+      status: "in_progress",
+    },
+    select: {
+      id: true,
+      topic: true,
+      difficulty: true,
+      publicContent: true,
+      status: true,
+    },
+  });
+  return { success: true as const, data: hideScriptTranslation(created) };
+}
+
+export async function appendListeningPart(userId: string, id: string) {
+  const existing = partBuilds.get(id);
+  if (existing) {
+    return existing;
+  }
+  const job = appendListeningPartOnce(userId, id).finally(() => {
+    partBuilds.delete(id);
+  });
+  partBuilds.set(id, job);
+  return job;
+}
+
+async function appendListeningPartOnce(userId: string, id: string) {
+  const session = await prisma.listeningSession.findFirst({ where: { id, userId } });
+  if (!session) {
+    return { success: false as const, error: "听力练习不存在", status: 404 };
+  }
+  if (session.status === "submitted") {
+    return { success: false as const, error: "这一场已经交卷", status: 409 };
+  }
+  const key = (session.answerKey || {}) as { answers?: AnswerRow[]; pending?: ListeningPaperSlot[] };
+  const pending = Array.isArray(key.pending) ? key.pending : [];
+  const nextSlot = pending[0];
+  if (!nextSlot) {
+    const current = await getListeningSession(userId, id);
+    return current.success
+      ? { success: true as const, data: current.data }
+      : { success: false as const, error: current.error, status: current.status };
+  }
+  const listeningModule = getListeningModule(nextSlot.moduleId);
+  if (!listeningModule) {
+    return { success: false as const, error: "下一部分不存在", status: 500 };
+  }
+  const generated = await generateClip(listeningModule, listeningModule.difficulty, nextSlot.questions);
+  if (!generated.success) {
+    return generated;
+  }
+  const content = (session.publicContent || {}) as { parts?: StoredPart[]; questions?: StoredPart["questions"] };
+  const parts = Array.isArray(content.parts) ? content.parts : [];
+  const index = parts.length + 1;
+  const built = clipToPart(generated.data, listeningModule, `part-${index}`, `p${index}-`);
+  const nextParts = [...parts, built.part];
+  const nextQuestions = nextParts.flatMap((part) => part.questions);
+  const updated = await prisma.listeningSession.update({
+    where: { id },
+    data: {
+      publicContent: {
+        ...(session.publicContent as object),
+        parts: nextParts,
+        questions: nextQuestions,
+        script: nextParts.map((part) => part.script).join("\n\n"),
+        scriptZh: nextParts.map((part) => part.scriptZh).join("\n\n"),
+      },
+      answerKey: {
+        answers: [...(Array.isArray(key.answers) ? key.answers : []), ...built.answers],
+        pending: pending.slice(1),
+      },
+    },
+    select: {
+      id: true,
+      topic: true,
+      difficulty: true,
+      publicContent: true,
+      status: true,
+    },
+  });
+  return { success: true as const, data: hideScriptTranslation(updated) };
+}
+
 export async function getListeningSession(userId: string, id: string) {
   const session = await prisma.listeningSession.findFirst({
     where: { id, userId },
@@ -258,6 +460,16 @@ function hideScriptTranslation<T extends { status?: string; publicContent?: unkn
   }
   const content = { ...(session.publicContent as Record<string, unknown>) };
   delete content.scriptZh;
+  if (Array.isArray(content.parts)) {
+    content.parts = content.parts.map((part) => {
+      if (!part || typeof part !== "object") {
+        return part;
+      }
+      const copy = { ...(part as Record<string, unknown>) };
+      delete copy.scriptZh;
+      return copy;
+    });
+  }
   return { ...session, publicContent: content };
 }
 
@@ -475,6 +687,9 @@ export async function createRetryWrongSession(userId: string) {
     questions?: Array<{ id: string; type: string; prompt: string; promptZh: string; options?: string[] }>;
     format?: string;
     playOnce?: boolean;
+    fullPaper?: boolean;
+    parts?: unknown;
+    partsTotal?: number;
   };
   const key = source.answerKey as { answers?: AnswerRow[] };
   const questions = (content.questions || []).filter((item) => wrongIds.has(item.id));
@@ -495,6 +710,9 @@ export async function createRetryWrongSession(userId: string) {
         questions,
         retryFrom: source.id,
         playOnce: false,
+        fullPaper: false,
+        parts: undefined,
+        partsTotal: undefined,
       },
       answerKey: { answers },
       status: "in_progress",
