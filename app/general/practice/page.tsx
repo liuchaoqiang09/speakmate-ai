@@ -346,12 +346,12 @@ function GeneralPracticeContent() {
 
   if (pageError || !sessionId) {
     return (
-      <div className="min-h-screen bg-[#F6F3EE]">
+      <div className="min-h-screen ">
         <AppHeader />
         <main className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center px-6 py-16">
           <div className="w-full max-w-xl text-center">
             <h1 className="text-[32px] font-semibold tracking-tight">Text dialogue</h1>
-            <p className="mt-1 text-sm text-[#8A847C]">文本对话</p>
+            <p className="mt-1 text-sm text-[#8A8176]">文本对话</p>
             <p className="ink-alert mt-6" role="alert">
               {pageError || "无法开始练习"}
             </p>
@@ -365,18 +365,18 @@ function GeneralPracticeContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F3EE]">
+    <div className="min-h-screen ">
       <AppHeader />
     <main className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-3xl flex-col">
-      <header className="flex items-start justify-between gap-4 border-b border-[#E6E6E6] px-4 py-4">
+      <header className="flex items-start justify-between gap-4 border-b border-[#E4D9C8] px-4 py-4">
         <div>
-          <p className="text-sm text-[#6F6A63]">Text dialogue · 文本对话</p>
+          <p className="text-sm text-[#6E675E]">Text dialogue · 文本对话</p>
           <h1 className="text-2xl font-semibold tracking-tight">{topic}</h1>
-          <p className="mt-1 text-sm text-[#6F6F6F]">
+          <p className="mt-1 text-sm text-[#6E675E]">
             难度：{difficulty || "未指定"} · 反馈：
             {feedbackMode === "immediate" ? "每轮简短纠错" : "结束后统一纠错"}
           </p>
-          {coachNote ? <p className="mt-2 text-sm text-[#0B6654]">This round · {searchParams.get("focus")}</p> : null}
+          {coachNote ? <p className="mt-2 text-sm text-[#16312B]">This round · {searchParams.get("focus")}</p> : null}
         </div>
         <button
           type="button"
@@ -394,7 +394,7 @@ function GeneralPracticeContent() {
 
       <section ref={transcriptRef} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-5">
         {messages.length === 0 && !sending ? (
-          <p className="rounded-2xl border border-[#E6E6E6] bg-white px-4 py-3 text-sm text-[#6F6F6F]">
+          <p className="rounded-2xl border border-[#E4D9C8] bg-white px-4 py-3 text-sm text-[#6E675E]">
             Say hello in English · 用英语打个招呼
           </p>
         ) : null}
@@ -407,9 +407,7 @@ function GeneralPracticeContent() {
             <div className={message.role === "user" ? "bubble-user" : "bubble-ai"}>
               <p
                 className={
-                  message.role === "user"
-                    ? "mb-1 text-xs font-medium text-white/65"
-                    : "mb-1 text-xs font-medium text-[#6F6F6F]"
+                  "mb-1 text-xs font-medium text-[#1C1712]"
                 }
               >
                 {message.role === "user" ? "You" : "SpeakMate"}
@@ -423,14 +421,14 @@ function GeneralPracticeContent() {
         ))}
 
         {sending ? (
-          <p className="text-sm text-[#6F6F6F]" role="status">
+          <p className="text-sm text-[#6E675E]" role="status">
             Thinking · 正在想下一句
           </p>
         ) : null}
       </section>
 
       <form
-        className="sticky bottom-0 border-t border-[#E6E6E6] bg-[#F6F3EE] px-4 py-4"
+        className="sticky bottom-0 border-t border-[#E4D9C8] px-4 py-4"
         onSubmit={(event) => void handleSend(event)}
       >
         {sendError ? (
@@ -474,7 +472,7 @@ function GeneralPracticeContent() {
           </button>
         </div>
         {speech.supportChecked && !speech.isSupported ? (
-          <p className="mt-2 text-xs text-[#8A8A8A]">当前浏览器不支持语音输入，请用 Chrome 或 Edge</p>
+          <p className="mt-2 text-xs text-[#8A8176]">当前浏览器不支持语音输入，请用 Chrome 或 Edge</p>
         ) : null}
       </form>
     </main>

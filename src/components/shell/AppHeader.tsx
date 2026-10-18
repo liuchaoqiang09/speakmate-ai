@@ -21,25 +21,25 @@ export function AppHeader() {
   const displayName = session?.user?.name?.trim() || "there";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[#ECE7DF] bg-[#F6F3EE]/95 px-4 py-3 backdrop-blur-md pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-8">
+    <header className="sticky top-0 z-30 border-b border-white/50 bg-[#FBF7F0]/70 px-4 py-3 backdrop-blur-xl pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center justify-between gap-3">
-          <Link href="/" className="text-sm font-semibold tracking-[0.18em] text-[#0E7C66]">
+          <Link href="/" className="text-sm font-semibold tracking-[0.18em] text-[#1F3D36]">
             SPEAKMATE
           </Link>
           <nav className="flex items-center gap-3 text-sm" aria-label="账号">
             {signedIn ? (
               <>
-                <span className="hidden items-center gap-1.5 text-[#6F6A63] sm:inline-flex">
+                <span className="hidden items-center gap-1.5 text-[#6E675E] sm:inline-flex">
                   <User size={16} strokeWidth={1.75} aria-hidden="true" />
                   Hello, {displayName}
                 </span>
-                <Link href="/settings" className="text-[#0E7C66]" aria-label="设置">
+                <Link href="/settings" className="text-[#1F3D36]" aria-label="设置">
                   <Settings size={16} strokeWidth={1.75} />
                 </Link>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 font-medium text-[#0E7C66]"
+                  className="inline-flex items-center gap-1 font-medium text-[#1F3D36]"
                   onClick={() => void signOut({ callbackUrl: "/" })}
                 >
                   <LogOut size={16} strokeWidth={1.75} aria-hidden="true" />
@@ -48,10 +48,10 @@ export function AppHeader() {
               </>
             ) : (
               <>
-                <Link href="/login" className="font-medium text-[#1C1917]">
-                  Sign in <span className="text-[#8A847C]">登录</span>
+                <Link href="/login" className="font-medium text-[#1C1712]">
+                  Sign in <span className="text-[#8A8176]">登录</span>
                 </Link>
-                <Link href="/register" className="rounded-full bg-[#E7F6F1] px-3 py-1 font-medium text-[#0E7C66]">
+                <Link href="/register" className="rounded-full border border-[#B7EADB] bg-white/80 px-3 py-1 font-medium text-[#1D6B56] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] transition-transform duration-200 active:scale-95">
                   Join <span className="font-normal">注册</span>
                 </Link>
               </>
@@ -65,8 +65,8 @@ export function AppHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`shrink-0 rounded-full px-3 py-1.5 ${
-                  active ? "bg-[#E7F6F1] font-medium text-[#0E7C66]" : "text-[#6F6A63]"
+                className={`shrink-0 rounded-full px-3 py-1.5 transition-transform duration-200 active:scale-95 ${
+                  active ? "bg-[#C8F6E6] font-medium text-[#1C1712] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]" : "text-[#6E675E]"
                 }`}
               >
                 {item.labelZh}

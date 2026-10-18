@@ -365,7 +365,7 @@ function ExamVoiceContent() {
 
   if (pageError || !sessionId) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-[#F6F3EE] px-6 py-16">
+      <main className="flex min-h-screen flex-col items-center justify-center px-6 py-16">
         <div className="w-full max-w-xl text-center">
           <h1 className="text-[32px] font-semibold tracking-tight">{script.heading}</h1>
           <p className="ink-alert mt-6" role="alert">
@@ -383,18 +383,18 @@ function ExamVoiceContent() {
   const part2SpeakDone = script.clock === "part2" && clockPhase.current === "speak" && clockSeconds === 0;
 
   return (
-    <div className="min-h-screen bg-[#F6F3EE]">
+    <div className="min-h-screen ">
       <AppHeader />
     <main className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-3xl flex-col px-4 py-4 sm:px-6">
       <header className="flex items-start justify-between gap-4 px-1 py-2">
         <div>
-          <p className="text-sm text-[#6F6A63]">
+          <p className="text-sm text-[#6E675E]">
             {practiceMode ? "Practice · 练习模式可看提示" : "Mock speaking · 模拟口语"}
           </p>
           <h1 className="mt-1 text-[32px] font-semibold tracking-tight">{script.heading}</h1>
-          <p className="mt-1 text-sm text-[#8A847C]">{script.headingZh}</p>
-          <p className="mt-2 text-sm text-[#6F6A63]">{script.limit}</p>
-          <p className="mt-1 text-sm text-[#8A847C]">{script.limitZh}</p>
+          <p className="mt-1 text-sm text-[#8A8176]">{script.headingZh}</p>
+          <p className="mt-2 text-sm text-[#6E675E]">{script.limit}</p>
+          <p className="mt-1 text-sm text-[#8A8176]">{script.limitZh}</p>
         </div>
         <button
           type="button"
@@ -403,12 +403,12 @@ function ExamVoiceContent() {
           className="ink-btn-line shrink-0 px-4 text-sm"
         >
           Leave
-          <span className="text-sm font-normal text-[#8A847C]">退出</span>
+          <span className="text-sm font-normal text-[#8A8176]">退出</span>
         </button>
       </header>
 
       {normalized.part === "full" ? (
-        <p className="mt-4 text-sm text-[#6F6A63]">
+        <p className="mt-4 text-sm text-[#6E675E]">
           {normalized.exam === "ielts"
             ? "整场口语：Part 1、Part 2、Part 3 一次完成。Part 3 接着 Part 2 的题卡。"
             : "整场口语：先听后复述 7 句，再完成 4 个访谈问题。"}
@@ -433,14 +433,14 @@ function ExamVoiceContent() {
       )}
 
       <section className="ink-card mt-4 p-4">
-        <p className="text-xs font-semibold tracking-[0.16em] text-[#0E7C66]">EXAMINER</p>
-        <p className="mt-2 text-sm leading-6 text-[#1C1917]">{script.announcement}</p>
+        <p className="text-xs font-semibold tracking-[0.16em] text-[#1F3D36]">EXAMINER</p>
+        <p className="mt-2 text-sm leading-6 text-[#1C1712]">{script.announcement}</p>
       </section>
 
       {script.clock === "part2" ? (
         <section className="ink-card mt-4 p-4">
-          <p className="text-xs font-semibold tracking-[0.16em] text-[#0E7C66]">STRUCTURE</p>
-          <p className="mt-2 text-sm text-[#6F6A63]">把话说满：观点 · 原因 · 例子 · 收尾</p>
+          <p className="text-xs font-semibold tracking-[0.16em] text-[#1F3D36]">STRUCTURE</p>
+          <p className="mt-2 text-sm text-[#6E675E]">把话说满：观点 · 原因 · 例子 · 收尾</p>
           <ul className="mt-3 space-y-1 text-sm leading-6">
             <li>Point · 先说你要讲什么</li>
             <li>Reason · 为什么</li>
@@ -452,24 +452,24 @@ function ExamVoiceContent() {
 
       {practiceMode ? (
         <section className="ink-card mt-4 p-4">
-          <p className="text-xs font-semibold tracking-[0.16em] text-[#0E7C66]">HINTS</p>
-          <p className="mt-2 text-sm leading-6 text-[#1C1917]">
+          <p className="text-xs font-semibold tracking-[0.16em] text-[#1F3D36]">HINTS</p>
+          <p className="mt-2 text-sm leading-6 text-[#1C1712]">
             卡住时可以说：Let me think. / For example... / The reason is...
           </p>
         </section>
       ) : null}
 
       {clockSeconds !== null ? (
-        <p className="mt-4 text-sm font-medium text-[#0B6654]" role="timer">
+        <p className="mt-4 text-sm font-medium text-[#16312B]" role="timer">
           {clockLabel} {formatClock(clockSeconds)}
           {clockDone || part2SpeakDone ? " · Time" : ""}
         </p>
       ) : null}
       {script.clock === "repeat" || script.clock === "toefl_full" ? (
-        <p className="mt-4 text-sm font-medium text-[#0B6654]">Repeat {repeatCount} / 7</p>
+        <p className="mt-4 text-sm font-medium text-[#16312B]">Repeat {repeatCount} / 7</p>
       ) : null}
       {script.clock === "interview" || script.clock === "toefl_full" ? (
-        <p className="mt-2 text-sm text-[#6F6A63]">Answers {answerCount} / 4</p>
+        <p className="mt-2 text-sm text-[#6E675E]">Answers {answerCount} / 4</p>
       ) : null}
 
       <div className="mt-4 flex flex-1">

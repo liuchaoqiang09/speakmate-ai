@@ -92,9 +92,9 @@ export function AudioPlayer({
   }
 
   return (
-    <div className="rounded-2xl border border-[#ECE7DF] bg-[#F7F7F5] p-4">
-      <p className="text-xs font-semibold tracking-[0.16em] text-[#0E7C66]">AUDIO</p>
-      <p className="mt-2 text-sm text-[#6F6A63]">
+    <div className="rounded-2xl border border-[#E4D9C8] bg-[#F7F1E7] p-4">
+      <p className="text-xs font-semibold tracking-[0.16em] text-[#1F3D36]">AUDIO</p>
+      <p className="mt-2 text-sm text-[#6E675E]">
         {hint ||
           (playOnce
             ? "The recording is played once only. You may look at the questions while you listen."
@@ -121,13 +121,13 @@ export function AudioPlayer({
         </button>
       </div>
       {playOnce ? (
-        <p className="mt-3 text-xs text-[#8A8A8A]">
+        <p className="mt-3 text-xs text-[#8A8176]">
           Exam speed locked · Played {plays}/1 · Use Chrome or Edge with system sound on
         </p>
       ) : (
         <>
           <fieldset className="mt-4">
-            <legend className="text-xs text-[#8A8A8A]">语速</legend>
+            <legend className="text-xs text-[#8A8176]">语速</legend>
             <div className="mt-2 flex flex-wrap gap-2">
               {[
                 { value: 0.75, label: "慢" },
@@ -146,7 +146,7 @@ export function AudioPlayer({
               ))}
             </div>
           </fieldset>
-          <p className="mt-3 text-xs text-[#8A8A8A]">已播放 {plays} 次 · 请用 Chrome 或 Edge，并打开系统声音</p>
+          <p className="mt-3 text-xs text-[#8A8176]">已播放 {plays} 次 · 请用 Chrome 或 Edge，并打开系统声音</p>
         </>
       )}
     </div>

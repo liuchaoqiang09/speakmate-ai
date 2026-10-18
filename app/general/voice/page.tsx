@@ -192,7 +192,7 @@ function GeneralVoiceContent() {
 
   if (pageError || !sessionId) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-[#F6F3EE] px-6 py-16">
+      <main className="flex min-h-screen flex-col items-center justify-center px-6 py-16">
         <div className="w-full max-w-xl text-center">
           <h1 className="text-[32px] font-semibold tracking-tight">通用英语</h1>
           <p className="ink-alert mt-6" role="alert">
@@ -207,17 +207,17 @@ function GeneralVoiceContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F3EE]">
+    <div className="min-h-screen ">
       <AppHeader />
     <main className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-3xl flex-col px-4 py-4 sm:px-6">
       <header className="px-1 py-2">
-        <p className="text-sm text-[#6F6A63]">Voice · 通用英语</p>
+        <p className="text-sm text-[#6E675E]">Voice · 通用英语</p>
         <h1 className="mt-1 text-[32px] font-semibold tracking-tight">{topic}</h1>
-        <p className="mt-2 text-sm text-[#6F6F6F]">
+        <p className="mt-2 text-sm text-[#6E675E]">
           难度：{difficulty} · 反馈：{feedbackLabel}
         </p>
-        <p className="mt-3 text-sm leading-6 text-[#1C1917]">{generalScene(topic, difficulty).welcome}</p>
-        {coachNote ? <p className="mt-2 text-sm text-[#0B6654]">This round · {searchParams.get("focus")}</p> : null}
+        <p className="mt-3 text-sm leading-6 text-[#1C1712]">{generalScene(topic, difficulty).welcome}</p>
+        {coachNote ? <p className="mt-2 text-sm text-[#16312B]">This round · {searchParams.get("focus")}</p> : null}
       </header>
 
       <SceneGoals topic={topic} difficulty={difficulty} />

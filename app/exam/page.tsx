@@ -80,17 +80,17 @@ export default function ExamPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F3EE]">
+    <div className="min-h-screen ">
       <AppHeader />
     <main className="flex flex-col items-center px-5 py-10 sm:px-6 sm:py-14">
       <div className="ink-card w-full max-w-xl p-6 sm:p-8">
-        <p className="text-xs font-semibold tracking-[0.22em] text-[#0E7C66]">EXAM</p>
-        <h1 className="mt-3 text-[32px] font-semibold tracking-tight text-[#1C1917]">IELTS & TOEFL</h1>
-        <p className="mt-2 text-sm text-[#8A847C]">阅读、写作、口语</p>
-        <p className="mt-3 text-sm leading-6 text-[#6F6A63]">阅读、写作和口语的模拟模式都是一整场。口语练习模式仍可单练某一部分。</p>
+        <p className="text-xs font-semibold tracking-[0.22em] text-[#1F3D36]">EXAM</p>
+        <h1 className="mt-3 text-[32px] font-semibold tracking-tight text-[#1C1712]">IELTS & TOEFL</h1>
+        <p className="mt-2 text-sm text-[#8A8176]">阅读、写作、口语</p>
+        <p className="mt-3 text-sm leading-6 text-[#6E675E]">阅读、写作和口语的模拟模式都是一整场。口语练习模式仍可单练某一部分。</p>
 
         <fieldset className="mt-10">
-          <legend className="text-sm font-medium text-[#1C1917]">Exam <span className="font-normal text-[#8A847C]">考试</span></legend>
+          <legend className="text-sm font-medium text-[#1C1712]">Exam <span className="font-normal text-[#8A8176]">考试</span></legend>
           <div className="mt-3 flex flex-wrap gap-3">
             {EXAMS.map((item) => (
               <button
@@ -116,7 +116,7 @@ export default function ExamPage() {
         </div>
 
         <fieldset className="mt-8">
-          <legend className="text-sm font-medium text-[#1C1917]">Speaking <span className="font-normal text-[#8A847C]">口语部分</span></legend>
+          <legend className="text-sm font-medium text-[#1C1712]">Speaking <span className="font-normal text-[#8A8176]">口语部分</span></legend>
           <div className="mt-3 flex flex-col gap-3">
             {parts.map((item) => (
               <button
@@ -135,21 +135,21 @@ export default function ExamPage() {
         <div className="mt-8 flex flex-col gap-3">
           <button type="button" className="ink-btn w-full" onClick={() => startVoice("practice")}>
             Practice with hints
-            <span className="ml-2 text-xs font-normal text-white/80">练习模式</span>
+            <span className="ml-2 text-xs font-normal text-[#1C1712]">练习模式</span>
           </button>
           <button type="button" className="ink-btn-line w-full" onClick={startFullVoice}>
             Full mock
-            <span className="ml-2 text-xs font-normal text-[#8A847C]">完整口语模考</span>
+            <span className="ml-2 text-xs font-normal text-[#8A8176]">完整口语模考</span>
           </button>
         </div>
         {history.length > 0 ? (
           <section className="mt-8">
-            <h2 className="text-sm font-medium">Recent scores <span className="font-normal text-[#8A847C]">最近分数 · 原文 5 天、分数 30 天</span></h2>
+            <h2 className="text-sm font-medium">Recent scores <span className="font-normal text-[#8A8176]">最近分数 · 原文 5 天、分数 30 天</span></h2>
             <ul className="mt-3 space-y-2 text-sm">
               {history.map((item, index) => (
                 <li key={`${item.label}-${index}`} className="flex justify-between gap-3">
                   <span>{item.label}</span>
-                  <span className="font-semibold text-[#0E7C66]">{item.score}</span>
+                  <span className="font-semibold text-[#1F3D36]">{item.score}</span>
                 </li>
               ))}
             </ul>

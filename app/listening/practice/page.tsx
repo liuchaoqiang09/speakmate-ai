@@ -152,7 +152,7 @@ function PracticeContent() {
 
   if (error && !session) {
     return (
-      <div className="min-h-screen bg-[#F6F3EE]">
+      <div className="min-h-screen ">
         <AppHeader />
       <main className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center px-6">
         <p className="ink-alert" role="alert">
@@ -213,29 +213,29 @@ function PracticeContent() {
   const details = new Map((result?.details || []).map((item) => [item.id, item]));
 
   return (
-    <div className="min-h-screen bg-[#F6F3EE]">
+    <div className="min-h-screen ">
       <AppHeader />
     <main className="mx-auto flex w-full max-w-3xl flex-col px-4 py-8 sm:px-6">
-      <p className="text-xs font-semibold tracking-[0.22em] text-[#0E7C66]">LISTEN</p>
+      <p className="text-xs font-semibold tracking-[0.22em] text-[#1F3D36]">LISTEN</p>
       <h1 className="mt-3 text-[32px] font-semibold tracking-tight">
         {mockExam ? content.title || content.examLabel || "Listening" : content.titleZh || "听力训练"}
       </h1>
-      {mockExam ? null : <p className="mt-1 text-sm text-[#8A847C]">{content.title}</p>}
-      <p className="mt-2 text-sm text-[#6F6A63]">
+      {mockExam ? null : <p className="mt-1 text-sm text-[#8A8176]">{content.title}</p>}
+      <p className="mt-2 text-sm text-[#6E675E]">
         {content.retryFrom
           ? "重听错过的题"
           : content.examLabel || `${session.difficulty} · 先听后做题`}
       </p>
       {content.compacted ? (
-        <p className="mt-3 rounded-2xl bg-[#F7F7F5] p-4 text-sm leading-6 text-[#6F6A63]">
+        <p className="mt-3 rounded-2xl bg-[#F7F1E7] p-4 text-sm leading-6 text-[#6E675E]">
           听力原文已按保留策略清理（满 5 天）。分数还在，如需再听请开新的一段。
         </p>
       ) : null}
       {content.instructions || (!mockExam && content.instructionsZh) ? (
-        <p className="mt-3 rounded-2xl bg-[#F7F7F5] p-4 text-sm leading-6 text-[#6F6A63]">
+        <p className="mt-3 rounded-2xl bg-[#F7F1E7] p-4 text-sm leading-6 text-[#6E675E]">
           {content.instructions}
           {!mockExam && content.instructionsZh ? (
-            <span className="mt-1 block text-[#8A847C]">{content.instructionsZh}</span>
+            <span className="mt-1 block text-[#8A8176]">{content.instructionsZh}</span>
           ) : null}
         </p>
       ) : null}
@@ -255,7 +255,7 @@ function PracticeContent() {
 
       <form className="mt-8 flex flex-col gap-5" onSubmit={(event) => void handleSubmit(event)}>
         {paperParts ? (
-          <p className="text-sm font-medium text-[#1C1917]">
+          <p className="text-sm font-medium text-[#1C1712]">
             {activePart?.label || `第 ${partIndex + 1} 段`} · {partIndex + 1}/{content.partsTotal || paperParts.length}
           </p>
         ) : null}
@@ -263,9 +263,9 @@ function PracticeContent() {
           const detail = details.get(question.id);
           return (
             <article key={question.id} className="ink-card p-5">
-              <p className="text-xs text-[#8A8A8A]">Question {questionOffset + index + 1}</p>
+              <p className="text-xs text-[#8A8176]">Question {questionOffset + index + 1}</p>
               <p className="mt-2 font-medium">{question.prompt}</p>
-              {mockExam ? null : <p className="mt-1 text-sm text-[#8A847C]">{question.promptZh}</p>}
+              {mockExam ? null : <p className="mt-1 text-sm text-[#8A8176]">{question.promptZh}</p>}
 
               {question.type === "choice" || question.type === "matching" ? (
                 <div className="mt-4 flex flex-col gap-2">
@@ -320,8 +320,8 @@ function PracticeContent() {
               ) : null}
 
               {detail ? (
-                <div className="mt-4 rounded-2xl bg-[#F7F7F5] p-3 text-sm">
-                  <p className={detail.correct ? "font-medium text-[#0E7C66]" : "font-medium text-[#B42318]"}>
+                <div className="mt-4 rounded-2xl bg-[#F7F1E7] p-3 text-sm">
+                  <p className={detail.correct ? "font-medium text-[#1F3D36]" : "font-medium text-[#B42318]"}>
                     {detail.correct ? "正确" : "不正确"} · 答案 {detail.answer}
                   </p>
                   <div className="mt-2">
@@ -359,24 +359,24 @@ function PracticeContent() {
             <h2 className="text-lg font-semibold">
               {result?.correctCount}/{result?.total} 题听对
             </h2>
-            <p className="mt-2 text-sm leading-6 text-[#6F6A63]">{result?.adviceZh}</p>
+            <p className="mt-2 text-sm leading-6 text-[#6E675E]">{result?.adviceZh}</p>
             {content.compacted ? (
-              <p className="mt-4 text-sm text-[#8A847C]">原文已清理，分数仍保留到 30 天。</p>
+              <p className="mt-4 text-sm text-[#8A8176]">原文已清理，分数仍保留到 30 天。</p>
             ) : (
               <>
-                <p className="mt-4 text-xs text-[#8A8A8A]">听力原文</p>
+                <p className="mt-4 text-xs text-[#8A8176]">听力原文</p>
                 {content.parts && content.parts.length > 0 ? (
                   content.parts.map((part) => (
                     <div key={part.id} className="mt-4">
                       <p className="text-sm font-medium">{part.label}</p>
                       <p className="mt-2 whitespace-pre-wrap text-sm leading-7">{part.script}</p>
-                      {part.scriptZh ? <p className="mt-3 text-sm leading-7 text-[#6F6F6F]">{part.scriptZh}</p> : null}
+                      {part.scriptZh ? <p className="mt-3 text-sm leading-7 text-[#6E675E]">{part.scriptZh}</p> : null}
                     </div>
                   ))
                 ) : (
                   <>
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-7">{content.script}</p>
-                    <p className="mt-3 text-sm leading-7 text-[#6F6F6F]">{content.scriptZh}</p>
+                    <p className="mt-3 text-sm leading-7 text-[#6E675E]">{content.scriptZh}</p>
                   </>
                 )}
               </>
@@ -395,7 +395,7 @@ function PracticeContent() {
                 </Link>
               )}
             </div>
-            <Link href="/" className="mt-3 inline-flex text-sm font-medium text-[#0E7C66]">
+            <Link href="/" className="mt-3 inline-flex text-sm font-medium text-[#1F3D36]">
               回首页
             </Link>
           </section>

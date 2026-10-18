@@ -58,17 +58,17 @@ function DrillContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F3EE]">
+    <div className="min-h-screen ">
       <AppHeader />
     <main className="mx-auto flex w-full max-w-xl flex-col px-4 py-10 sm:px-6">
-      <p className="text-xs font-semibold tracking-[0.22em] text-[#0E7C66]">DRILL</p>
+      <p className="text-xs font-semibold tracking-[0.22em] text-[#1F3D36]">DRILL</p>
       <h1 className="mt-3 text-[32px] font-semibold tracking-tight">Repeat the upgrade</h1>
-      <p className="mt-2 text-sm text-[#8A847C]">先看正确说法，再开口跟一遍</p>
+      <p className="mt-2 text-sm text-[#8A8176]">先看正确说法，再开口跟一遍</p>
 
       <section className="ink-card mt-8 p-5">
-        <p className="text-xs text-[#8A8A8A]">你原来的句子</p>
-        <p className="mt-2 text-sm text-[#6F6F6F]">{prompt || "（来自总结纠错）"}</p>
-        <p className="mt-4 text-xs text-[#8A8A8A]">请尽量说成</p>
+        <p className="text-xs text-[#8A8176]">你原来的句子</p>
+        <p className="mt-2 text-sm text-[#6E675E]">{prompt || "（来自总结纠错）"}</p>
+        <p className="mt-4 text-xs text-[#8A8176]">请尽量说成</p>
         <p className="mt-2 text-lg font-semibold leading-7">{expected || "请从总结页进入"}</p>
       </section>
 
@@ -83,16 +83,16 @@ function DrillContent() {
             onStart={speech.start}
             onStop={speech.stop}
           />
-          <p className="text-sm text-[#6F6A63]">按住说英语</p>
+          <p className="text-sm text-[#6E675E]">按住说英语</p>
         </div>
       </div>
 
       {spoken ? (
         <section className="ink-card mt-6 p-5">
-          <p className="text-xs text-[#8A8A8A]">你刚才说的</p>
+          <p className="text-xs text-[#8A8176]">你刚才说的</p>
           <p className="mt-2 text-sm leading-6">{spoken}</p>
           {score !== null ? (
-            <p className="mt-3 text-sm font-medium text-[#0E7C66]">关键词覆盖约 {score}%</p>
+            <p className="mt-3 text-sm font-medium text-[#1F3D36]">关键词覆盖约 {score}%</p>
           ) : null}
         </section>
       ) : null}

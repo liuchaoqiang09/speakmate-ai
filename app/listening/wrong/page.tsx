@@ -40,7 +40,7 @@ export default function ListeningWrongPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F3EE]">
+    <div className="min-h-screen ">
       <AppHeader />
       <main className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center px-6">
         <p className="ink-alert" role="alert">

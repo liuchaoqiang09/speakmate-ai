@@ -99,12 +99,12 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F3EE]">
+    <div className="min-h-screen ">
       <AppHeader />
     <main className="mx-auto flex w-full max-w-3xl flex-col px-4 py-8 sm:px-6">
-      <p className="text-xs font-semibold tracking-[0.22em] text-[#0E7C66]">REVIEW</p>
+      <p className="text-xs font-semibold tracking-[0.22em] text-[#1F3D36]">REVIEW</p>
       <h1 className="mt-3 text-[32px] font-semibold tracking-tight">Say it again</h1>
-      <p className="mt-2 text-sm text-[#8A847C]">
+      <p className="mt-2 text-sm text-[#8A8176]">
         把上次纠错过的句子再开口说一遍。未掌握的句子保留 30 天，已掌握的约 7 天后清理。
       </p>
 
@@ -119,21 +119,21 @@ export default function ReviewPage() {
         </button>
       ) : null}
 
-      {loading ? <p className="mt-8 text-sm text-[#6F6F6F]">正在加载待跟读的句子。</p> : null}
+      {loading ? <p className="mt-8 text-sm text-[#6E675E]">正在加载待跟读的句子。</p> : null}
       {error ? (
         <p className="ink-alert mt-8" role="alert">
           {error}
         </p>
       ) : null}
       {!loading && items.length === 0 && !error ? (
-        <p className="mt-8 text-sm text-[#6F6A63]">暂时没有待复习的句子。先完成一轮练习。</p>
+        <p className="mt-8 text-sm text-[#6E675E]">暂时没有待复习的句子。先完成一轮练习。</p>
       ) : null}
 
       <ul className="mt-8 flex flex-col gap-3">
         {items.map((item) => (
           <li key={item.id} className="ink-card p-4">
-            <p className="text-xs text-[#8A8A8A]">{item.itemType}</p>
-            <p className="mt-2 text-sm text-[#6F6F6F] line-through">{item.prompt}</p>
+            <p className="text-xs text-[#8A8176]">{item.itemType}</p>
+            <p className="mt-2 text-sm text-[#6E675E] line-through">{item.prompt}</p>
             <p className="mt-1 font-medium">{item.expectedAnswer}</p>
             <div className="mt-4 flex flex-wrap items-center gap-4">
               <Link

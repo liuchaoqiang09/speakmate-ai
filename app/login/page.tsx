@@ -28,20 +28,20 @@ export default function LoginPage() {
       });
 
       if (result?.error === "TooManyAttempts") {
-        setError("Too many attempts  尝试次数过多，请 15 分钟后再试");
+        setError("Too many attempts 尝试次数过多，请 15 分钟后再试");
         return;
       }
 
       if (!result || result.error) {
-        setError("Email or password is incorrect  邮箱或密码不正确");
+        setError("Email or password is incorrect 邮箱或密码不正确");
         return;
       }
 
-      setSuccess("Signed in  正在进入首页");
+      setSuccess("Signed in 正在进入首页");
       router.push("/");
       router.refresh();
     } catch {
-      setError("Network error  请稍后重试");
+      setError("Network error 请稍后重试");
     } finally {
       setLoading(false);
     }
@@ -50,28 +50,30 @@ export default function LoginPage() {
   return (
     <AuthStage headline="Welcome back" lede="用邮箱继续练习">
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-        <label className="flex flex-col gap-2 text-sm text-[#1C1917]">
+        <label className="flex flex-col gap-2 text-sm text-[#1C1712]">
           <span>
-            Email <span className="text-[#8A847C]">邮箱</span>
+            Email <span className="text-[#8A8176]">邮箱</span>
           </span>
           <input
             type="email"
             required
             autoComplete="email"
+            placeholder="name@example.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             className="ink-input"
           />
         </label>
 
-        <label className="flex flex-col gap-2 text-sm text-[#1C1917]">
+        <label className="flex flex-col gap-2 text-sm text-[#1C1712]">
           <span>
-            Password <span className="text-[#8A847C]">密码</span>
+            Password <span className="text-[#8A8176]">密码</span>
           </span>
           <input
             type="password"
             required
             autoComplete="current-password"
+            placeholder="输入密码"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className="ink-input"
@@ -94,15 +96,15 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <p className="mt-8 text-sm text-[#6F6A63]">
+      <p className="mt-8 text-sm text-[#6E675E]">
         New here{" "}
         <Link
           href="/register"
-          className="font-medium text-[#0E7C66] underline-offset-4 transition-colors hover:underline"
+          className="font-medium text-[#1F3D36] underline-offset-4 transition-colors hover:underline"
         >
           Create an account
         </Link>
-        <span className="text-[#8A847C]"> 注册</span>
+        <span className="text-[#8A8176]"> 注册</span>
       </p>
     </AuthStage>
   );

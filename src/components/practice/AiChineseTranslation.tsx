@@ -10,8 +10,8 @@ type AiChineseTranslationProps = {
 };
 
 /**
- * AI 英文字幕下方的按需中文翻译。默认只显示按钮，点击后才翻译。
- */
+  * AI 英文字幕下方的按需中文翻译。默认只显示按钮，点击后才翻译。
+  */
 export function AiChineseTranslation({
   english,
   enabled = true,
@@ -46,10 +46,10 @@ export function AiChineseTranslation({
   if (open && chinese) {
     return (
       <div className="mt-2">
-        <p className="mt-0 text-sm leading-6 text-[#6F6F6F]">{chinese}</p>
+        <p className="mt-0 text-sm leading-6 text-[#6E675E]">{chinese}</p>
         <button
           type="button"
-          className="mt-1 text-xs font-medium text-[#0E7C66] underline-offset-2 hover:underline"
+          className="mt-1 text-xs font-medium text-[#1F3D36] underline-offset-2 hover:underline"
           onClick={() => setOpen(false)}
         >
           收起译文
@@ -64,7 +64,7 @@ export function AiChineseTranslation({
         type="button"
         disabled={loading}
         onClick={() => void handleTranslate()}
-        className="text-xs font-medium text-[#0E7C66] underline-offset-2 hover:underline disabled:cursor-wait disabled:opacity-60"
+        className="text-xs font-medium text-[#1F3D36] underline-offset-2 hover:underline disabled:cursor-wait disabled:opacity-60"
       >
         {loading ? "翻译中…" : "翻译成中文"}
       </button>

@@ -79,10 +79,10 @@ function finalKey(line: VoiceSubtitleLine): string {
 }
 
 /**
- * 火山引擎实时语音通话区域
- * SDK 只在浏览器里动态加载，避免 Next.js 服务端渲染报错
- * 字幕来自 onRoomBinaryMessageReceived 里的 subv 帧
- */
+  * 火山引擎实时语音通话区域
+  * SDK 只在浏览器里动态加载，避免 Next.js 服务端渲染报错
+  * 字幕来自 onRoomBinaryMessageReceived 里的 subv 帧
+  */
 export const VoiceRoom = forwardRef<VoiceRoomHandle, VoiceRoomProps>(
   function VoiceRoom({ sessionId = "", draft, onDefiniteCaption, onLive, onEnded, deferAssistantText = false }, ref) {
     const [phase, setPhase] = useState<VoicePhase>("idle");
@@ -643,7 +643,7 @@ export const VoiceRoom = forwardRef<VoiceRoomHandle, VoiceRoomProps>(
         liveRef.current = true;
         setPhase("live");
         onLiveRef.current?.();
-        setDetail("Speak in English  SpeakMate 会语音回复");
+        setDetail("Speak in English SpeakMate 会语音回复");
       } catch (error) {
         await leave();
         const message = error instanceof Error ? error.message : "连接失败";
@@ -686,8 +686,8 @@ export const VoiceRoom = forwardRef<VoiceRoomHandle, VoiceRoomProps>(
 
     return (
       <section className="ink-card flex min-h-0 flex-1 flex-col">
-        <div className="flex items-center justify-between gap-3 border-b border-[#E6E6E6] px-4 py-3">
-          <p className="text-sm text-[#6F6F6F]">
+        <div className="flex items-center justify-between gap-3 border-b border-[#E4D9C8] px-4 py-3">
+          <p className="text-sm text-[#6E675E]">
             {phase === "live" ? `本轮 ${clock}` : captionsHidden ? "纯语音模式" : "实时字幕"}
           </p>
           <button
@@ -700,7 +700,7 @@ export const VoiceRoom = forwardRef<VoiceRoomHandle, VoiceRoomProps>(
               })
             }
             aria-pressed={captionsHidden}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#E4DDD2] bg-white px-3 text-xs font-medium text-[#1C1917] transition-[border-color,background-color] hover:border-[#0E7C66] hover:bg-[#F3FAF7]"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#D9CDBB] bg-white px-3 text-xs font-medium text-[#1C1712] transition-[border-color,background-color] hover:border-[#1F3D36] hover:bg-[#F3F6F3]"
           >
             {captionsHidden ? (
               <Captions size={14} strokeWidth={1.75} aria-hidden="true" />
@@ -711,9 +711,9 @@ export const VoiceRoom = forwardRef<VoiceRoomHandle, VoiceRoomProps>(
           </button>
         </div>
 
-        <div className="border-b border-[#ECE7DF] bg-[#F7F7F5] px-4 py-3">
-          <p className="text-sm font-medium text-[#1C1917]">{turnTitle}</p>
-          <p className="mt-1 text-xs leading-5 text-[#6F6A63]">{turnHint}</p>
+        <div className="border-b border-[#E4D9C8] bg-[#F7F1E7] px-4 py-3">
+          <p className="text-sm font-medium text-[#1C1712]">{turnTitle}</p>
+          <p className="mt-1 text-xs leading-5 text-[#6E675E]">{turnHint}</p>
           {weakNet ? (
             <p className="mt-2 text-xs text-[#B42318]">还没听到对方声音。请检查网络，或结束本轮再进。</p>
           ) : null}
@@ -722,14 +722,14 @@ export const VoiceRoom = forwardRef<VoiceRoomHandle, VoiceRoomProps>(
         <div ref={transcriptRef} className="flex min-h-[12rem] flex-1 flex-col gap-4 overflow-y-auto px-4 py-5 pb-4">
           {captionsHidden ? (
             <div className="flex flex-1 items-center justify-center">
-              <p className="max-w-xs text-center text-sm leading-6 text-[#8A8A8A]">
+              <p className="max-w-xs text-center text-sm leading-6 text-[#8A8176]">
                 字幕已关闭 · 只听声音
               </p>
             </div>
           ) : null}
 
           {!captionsHidden && captions.length === 0 ? (
-            <p className="rounded-2xl border border-[#E6E6E6] bg-[#F7F7F5] px-4 py-3 text-sm text-[#6F6F6F]">
+            <p className="rounded-2xl border border-[#E4D9C8] bg-[#F7F1E7] px-4 py-3 text-sm text-[#6E675E]">
               Captions appear here · 通话后显示字幕
             </p>
           ) : null}
@@ -758,7 +758,7 @@ export const VoiceRoom = forwardRef<VoiceRoomHandle, VoiceRoomProps>(
                             : "bubble-ai"
                       }
                     >
-                      <p className={user && !pending ? "mb-1 text-xs text-white/65" : "mb-1 text-xs text-[#6F6F6F]"}>
+                      <p className="mb-1 text-xs text-[#1C1712]">
                         {user ? "You" : "SpeakMate"}
                       </p>
                       <p className="whitespace-pre-wrap">
@@ -799,7 +799,7 @@ export const VoiceRoom = forwardRef<VoiceRoomHandle, VoiceRoomProps>(
               </button>
             ))}
           </div>
-          <p className="mb-4 text-xs text-[#8A8A8A]">先选音色再点麦克风，通话中不能换</p>
+          <p className="mb-4 text-xs text-[#8A8176]">先选音色再点麦克风，通话中不能换</p>
           <button
             type="button"
             onClick={() => void startCall()}
@@ -810,11 +810,11 @@ export const VoiceRoom = forwardRef<VoiceRoomHandle, VoiceRoomProps>(
           >
             <Mic size={28} strokeWidth={1.75} aria-hidden="true" />
           </button>
-          <p className="mt-4 text-sm text-[#6F6F6F]" role="status">
+          <p className="mt-4 text-sm text-[#6E675E]" role="status">
             {callLabel}
           </p>
-          {partnerId ? <p className="mt-1 text-xs text-[#8A8A8A]">已连接到语音伙伴</p> : null}
-          <p className="mt-3 max-w-sm text-center text-xs leading-5 text-[#8A8A8A]">{detail}</p>
+          {partnerId ? <p className="mt-1 text-xs text-[#8A8176]">已连接到语音伙伴</p> : null}
+          <p className="mt-3 max-w-sm text-center text-xs leading-5 text-[#8A8176]">{detail}</p>
           {phase === "error" ? (
             <button type="button" className="ink-btn-line mt-3 h-11 px-4 text-sm" onClick={() => void startCall()}>
               再试一次 · Retry

@@ -262,19 +262,19 @@ export function PaperSession({
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F3EE]">
+    <div className="min-h-screen ">
       <AppHeader />
     <main className="mx-auto flex w-full max-w-3xl flex-col px-4 py-6 sm:px-6">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold tracking-[0.18em] text-[#0E7C66]">{exam.toUpperCase()}</p>
+          <p className="text-xs font-semibold tracking-[0.18em] text-[#1F3D36]">{exam.toUpperCase()}</p>
           <h1 className="mt-2 text-[32px] font-semibold tracking-tight">{rule.title}</h1>
-          <p className="mt-1 text-sm text-[#8A847C]">{rule.titleZh}</p>
+          <p className="mt-1 text-sm text-[#8A8176]">{rule.titleZh}</p>
         </div>
         {phase === "live" || phase === "scoring" ? (
           <button type="button" onClick={() => router.push("/exam")} className="ink-btn-line shrink-0 px-4 text-sm">
             Leave
-            <span className="text-sm font-normal text-[#8A847C]">退出</span>
+            <span className="text-sm font-normal text-[#8A8176]">退出</span>
           </button>
         ) : null}
       </header>
@@ -283,7 +283,7 @@ export function PaperSession({
         <section className="ink-card mt-6 p-5">
           {sets.length > 0 ? (
             <label className="mb-5 block text-sm font-medium">
-              Passage <span className="font-normal text-[#8A847C]">文章</span>
+              Passage <span className="font-normal text-[#8A8176]">文章</span>
               <select
                 className="ink-input mt-2"
                 value={selectedSet}
@@ -312,7 +312,7 @@ export function PaperSession({
 
       {phase === "live" || phase === "scoring" ? (
         <>
-          <p className="mt-4 text-sm font-medium text-[#0B6654]" role="timer">
+          <p className="mt-4 text-sm font-medium text-[#16312B]" role="timer">
             Time {formatClock(seconds)}{seconds === 0 ? " · Time is up" : ""}
           </p>
           {error ? <p className="ink-alert mt-4" role="alert">{error}</p> : null}
@@ -454,23 +454,23 @@ export function PaperSession({
                 <div className="mt-4 overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr>{paper.task1.table.columns.map((column) => <th key={column} className="border-b border-[#E7E1D8] py-2 pr-3">{column}</th>)}</tr>
+                      <tr>{paper.task1.table.columns.map((column) => <th key={column} className="border-b border-[#E4D9C8] py-2 pr-3">{column}</th>)}</tr>
                     </thead>
                     <tbody>
                       {paper.task1.table.rows.map((row) => (
-                        <tr key={row.join("-")}>{row.map((cell) => <td key={cell} className="border-b border-[#F0EBE3] py-2 pr-3">{cell}</td>)}</tr>
+                        <tr key={row.join("-")}>{row.map((cell) => <td key={cell} className="border-b border-[#EDE4D6] py-2 pr-3">{cell}</td>)}</tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
                 <textarea className="ink-input mt-4 min-h-40" value={task1} onChange={(event) => setTask1(event.target.value)} />
-                <p className="mt-2 text-xs text-[#8A847C]">{countWords(task1)} words</p>
+                <p className="mt-2 text-xs text-[#8A8176]">{countWords(task1)} words</p>
               </article>
               <article className="ink-card p-5">
                 <h2 className="text-lg font-semibold">Task 2 · {paper.task2.minimumWords} words</h2>
                 <p className="mt-3 text-sm leading-7">{paper.task2.prompt}</p>
                 <textarea className="ink-input mt-4 min-h-52" value={task2} onChange={(event) => setTask2(event.target.value)} />
-                <p className="mt-2 text-xs text-[#8A847C]">{countWords(task2)} words</p>
+                <p className="mt-2 text-xs text-[#8A8176]">{countWords(task2)} words</p>
               </article>
             </section>
           ) : null}
@@ -502,7 +502,7 @@ export function PaperSession({
                     {paper.email.points.map((point) => <li key={point}>{point}</li>)}
                   </ul>
                   <textarea className="ink-input mt-4 min-h-36" value={email} onChange={(event) => setEmail(event.target.value)} />
-                  <p className="mt-2 text-xs text-[#8A847C]">{countWords(email)} words</p>
+                  <p className="mt-2 text-xs text-[#8A8176]">{countWords(email)} words</p>
                 </article>
               ) : null}
               {paper.discussion ? (
@@ -512,7 +512,7 @@ export function PaperSession({
                   <p className="mt-3 text-sm leading-7">{paper.discussion.studentA}</p>
                   <p className="mt-3 text-sm leading-7">{paper.discussion.studentB}</p>
                   <textarea className="ink-input mt-4 min-h-40" value={discussion} onChange={(event) => setDiscussion(event.target.value)} />
-                  <p className="mt-2 text-xs text-[#8A847C]">{countWords(discussion)} words</p>
+                  <p className="mt-2 text-xs text-[#8A8176]">{countWords(discussion)} words</p>
                 </article>
               ) : null}
             </section>
@@ -523,7 +523,7 @@ export function PaperSession({
           </button>
           <button type="button" className="ink-btn-dark mt-3 w-full" onClick={() => router.push("/exam")}>
             Leave
-            <span className="text-sm font-normal text-white/70">退出</span>
+            <span className="text-sm font-normal text-[#f7f3ea]">退出</span>
           </button>
         </>
       ) : null}
@@ -542,11 +542,11 @@ function ScoreCard({ result }: { result: Record<string, unknown> }) {
   const items = Array.isArray(result.items) ? result.items : [];
   return (
     <section className="ink-card mt-6 p-5">
-      <p className="text-xs font-semibold tracking-[0.16em] text-[#0E7C66]">REFERENCE</p>
-      {band !== null ? <p className="mt-3 text-4xl font-semibold text-[#0E7C66]">{band}</p> : null}
+      <p className="text-xs font-semibold tracking-[0.16em] text-[#1F3D36]">REFERENCE</p>
+      {band !== null ? <p className="mt-3 text-4xl font-semibold text-[#1F3D36]">{band}</p> : null}
       {correct !== null && total !== null ? <p className="mt-2 text-sm">{correct} / {total}</p> : null}
-      {typeof result.note === "string" ? <p className="mt-3 text-sm leading-6 text-[#6F6A63]">{result.note}</p> : null}
-      <p className="mt-3 text-sm text-[#8A847C]">参考分，不是官方成绩</p>
+      {typeof result.note === "string" ? <p className="mt-3 text-sm leading-6 text-[#6E675E]">{result.note}</p> : null}
+      <p className="mt-3 text-sm text-[#8A8176]">参考分，不是官方成绩</p>
       {items.length > 0 ? (
         <ul className="mt-4 space-y-2 text-sm">
           {items.slice(0, 12).map((item) => {
@@ -554,7 +554,7 @@ function ScoreCard({ result }: { result: Record<string, unknown> }) {
             return (
               <li key={row.id}>
                 {row.correct ? "Right" : "Wrong"} · {row.given || "blank"} → {row.expected}
-                {!row.correct && row.explanation ? <span className="mt-1 block text-[#6F6A63]">{row.explanation}</span> : null}
+                {!row.correct && row.explanation ? <span className="mt-1 block text-[#6E675E]">{row.explanation}</span> : null}
               </li>
             );
           })}
@@ -572,10 +572,10 @@ function WritingLines({ label, value }: { label: string; value: Record<string, u
   const score = typeof value.overall === "number" ? value.overall : typeof value.score === "number" ? value.score : null;
   const missed = Array.isArray(value.missedPoints) ? value.missedPoints.filter((item): item is string => typeof item === "string" && item.trim().length > 0) : [];
   return (
-    <div className="mt-4 border-t border-[#E7E1D8] pt-3 text-sm leading-6">
+    <div className="mt-4 border-t border-[#E4D9C8] pt-3 text-sm leading-6">
       <p className="font-semibold">{label}{score !== null ? ` · ${score}` : ""}</p>
       {typeof value.comment === "string" ? <p className="mt-1">{value.comment}</p> : null}
-      {missed.length > 0 ? <p className="mt-2 text-[#6F6A63]">Missing · {missed.join(" · ")}</p> : null}
+      {missed.length > 0 ? <p className="mt-2 text-[#6E675E]">Missing · {missed.join(" · ")}</p> : null}
     </div>
   );
 }

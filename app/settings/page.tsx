@@ -30,13 +30,13 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F3EE]">
+    <div className="min-h-screen ">
       <AppHeader />
       <main className="mx-auto flex w-full max-w-xl flex-col px-4 py-10 sm:px-6">
-        <p className="text-xs font-semibold tracking-[0.22em] text-[#0E7C66]">SETTINGS</p>
+        <p className="text-xs font-semibold tracking-[0.22em] text-[#1F3D36]">SETTINGS</p>
         <h1 className="mt-3 text-[32px] font-semibold tracking-tight">练习设置</h1>
-        <p className="mt-2 text-sm text-[#8A847C]">Practice preferences</p>
-        <p className="mt-3 text-sm leading-6 text-[#6F6A63]">
+        <p className="mt-2 text-sm text-[#8A8176]">Practice preferences</p>
+        <p className="mt-3 text-sm leading-6 text-[#6E675E]">
           音色和字幕会记在这台设备上，下一通语音自动用。账号登录以后再单独调整。
         </p>
 

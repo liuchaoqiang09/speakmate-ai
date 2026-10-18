@@ -73,15 +73,15 @@ function studyNotes(value: unknown) {
   }
   return (
     <section className="ink-card mt-6 p-5">
-      <h2 className="text-lg font-semibold">Stronger sample <span className="text-sm font-normal text-[#8A847C]">更高一档示范</span></h2>
+      <h2 className="text-lg font-semibold">Stronger sample <span className="text-sm font-normal text-[#8A8176]">更高一档示范</span></h2>
       {bandNote ? (
         <div className="mt-3">
-          <DualCaption english={bandNote} englishClassName="text-sm leading-6 text-[#6F6A63]" />
+          <DualCaption english={bandNote} englishClassName="text-sm leading-6 text-[#6E675E]" />
         </div>
       ) : null}
       {modelAnswer ? (
         <div className="mt-3">
-          <p className="text-xs text-[#8A8A8A]">示范回答</p>
+          <p className="text-xs text-[#8A8176]">示范回答</p>
           <DualCaption english={modelAnswer} englishClassName="text-sm leading-7" />
         </div>
       ) : null}
@@ -116,7 +116,7 @@ function BandSketch({ score }: { score: IeltsReference | ToeflReference }) {
       : null;
   return (
     <section className="ink-card mt-6 p-5">
-      <h2 className="text-lg font-semibold">This level <span className="text-sm font-normal text-[#8A847C]">这一档通常怎样</span></h2>
+      <h2 className="text-lg font-semibold">This level <span className="text-sm font-normal text-[#8A8176]">这一档通常怎样</span></h2>
       <div className="mt-3">
         <DualCaption english={bandSketch(level)} />
       </div>
@@ -124,7 +124,7 @@ function BandSketch({ score }: { score: IeltsReference | ToeflReference }) {
         <div className="mt-3">
           <DualCaption
             english={`Lowest area · ${weakest[0]} ${Number(weakest[1]).toFixed(1)}. ${bandSketch(Number(weakest[1]))}`}
-            englishClassName="text-sm leading-6 text-[#6F6A63]"
+            englishClassName="text-sm leading-6 text-[#6E675E]"
           />
         </div>
       ) : null}
@@ -244,7 +244,7 @@ function SummaryContent() {
 
   if (error || !payload) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-[#F6F3EE] px-6 py-16">
+      <main className="flex min-h-screen flex-col items-center justify-center px-6 py-16">
         <div className="w-full max-w-xl text-center">
           <h1 className="text-[32px] font-semibold tracking-tight">{pageTitle}</h1>
           <p className="ink-alert mt-6" role="alert">
@@ -274,16 +274,16 @@ function SummaryContent() {
     typeof summary.turnCount === "number";
 
   return (
-    <div className="min-h-screen bg-[#F6F3EE]">
+    <div className="min-h-screen ">
       <AppHeader />
     <main className="mx-auto flex w-full max-w-3xl flex-col px-4 py-8 sm:px-6">
-      <p className="text-center text-xs font-medium tracking-[0.28em] text-[#8A8A8A]">SUMMARY</p>
+      <p className="text-center text-xs font-medium tracking-[0.28em] text-[#8A8176]">SUMMARY</p>
       <h1 className="mt-3 text-center text-[32px] font-semibold tracking-tight">{pageTitle}</h1>
-      <p className="mt-2 text-center text-sm text-[#8A847C]">本次总结</p>
-      <p className="mt-3 text-center text-sm text-[#6F6A63]">参考分，不含口音，不是官方成绩</p>
+      <p className="mt-2 text-center text-sm text-[#8A8176]">本次总结</p>
+      <p className="mt-3 text-center text-sm text-[#6E675E]">参考分，不含口音，不是官方成绩</p>
 
       {insufficient ? (
-        <p className="mt-8 rounded-2xl border border-[#0E7C66] bg-white px-4 py-3 text-sm" role="status">
+        <p className="mt-8 rounded-2xl border border-[#1F3D36] bg-white px-4 py-3 text-sm" role="status">
           数据不足，本次练习太短，无法生成完整反馈
         </p>
       ) : null}
@@ -292,25 +292,25 @@ function SummaryContent() {
         <section className="mt-8 grid grid-cols-2 gap-3">
           {partLabel ? (
             <article className="ink-card p-4">
-              <p className="text-xs text-[#8A8A8A]">题型</p>
+              <p className="text-xs text-[#8A8176]">题型</p>
               <p className="mt-2 text-lg font-semibold">{partLabel}</p>
             </article>
           ) : null}
           {summary.difficulty ? (
             <article className="ink-card p-4">
-              <p className="text-xs text-[#8A8A8A]">难度</p>
+              <p className="text-xs text-[#8A8176]">难度</p>
               <p className="mt-2 text-lg font-semibold">{summary.difficulty}</p>
             </article>
           ) : null}
           {typeof summary.durationSeconds === "number" ? (
             <article className="ink-card p-4">
-              <p className="text-xs text-[#8A8A8A]">时长</p>
+              <p className="text-xs text-[#8A8176]">时长</p>
               <p className="mt-2 text-lg font-semibold">{summary.durationSeconds} 秒</p>
             </article>
           ) : null}
           {typeof summary.turnCount === "number" ? (
             <article className="ink-card p-4">
-              <p className="text-xs text-[#8A8A8A]">轮次</p>
+              <p className="text-xs text-[#8A8176]">轮次</p>
               <p className="mt-2 text-lg font-semibold">{summary.turnCount}</p>
             </article>
           ) : null}
@@ -339,7 +339,7 @@ function SummaryContent() {
       <Link href="/review" className="ink-btn-line mt-3">
         Review wrong sentences · 错句再开口
       </Link>
-      <Link href="/history" className="mt-3 text-center text-sm font-medium text-[#0E7C66]">
+      <Link href="/history" className="mt-3 text-center text-sm font-medium text-[#1F3D36]">
         Practice history · 练习历史
       </Link>
     </main>

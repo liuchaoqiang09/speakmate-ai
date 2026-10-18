@@ -101,12 +101,12 @@ export default function ListeningHistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F3EE]">
+    <div className="min-h-screen ">
       <AppHeader />
     <main className="mx-auto flex w-full max-w-3xl flex-col px-4 py-8 sm:px-6">
-      <p className="text-xs font-semibold tracking-[0.22em] text-[#0E7C66]">LISTEN</p>
+      <p className="text-xs font-semibold tracking-[0.22em] text-[#1F3D36]">LISTEN</p>
       <h1 className="mt-3 text-[32px] font-semibold tracking-tight">听力记录</h1>
-      <p className="mt-2 text-sm text-[#8A847C]">
+      <p className="mt-2 text-sm text-[#8A8176]">
         分数保留 30 天，听力原文 5 天后自动清理。不需要的记录也可以立刻删掉。
       </p>
 
@@ -121,7 +121,7 @@ export default function ListeningHistoryPage() {
         </button>
       ) : null}
 
-      {loading ? <p className="mt-8 text-sm text-[#6F6F6F]">正在加载听力记录。</p> : null}
+      {loading ? <p className="mt-8 text-sm text-[#6E675E]">正在加载听力记录。</p> : null}
       {error ? (
         <p className="ink-alert mt-8" role="alert">
           {error}
@@ -129,20 +129,20 @@ export default function ListeningHistoryPage() {
       ) : null}
 
       {!loading && rows.length === 0 && !error ? (
-        <p className="mt-8 text-sm text-[#6F6A63]">还没有听力记录。先听一轮再回来。</p>
+        <p className="mt-8 text-sm text-[#6E675E]">还没有听力记录。先听一轮再回来。</p>
       ) : null}
 
       <ul className="mt-8 flex flex-col gap-3">
         {rows.map((row) => (
           <li key={row.id} className="ink-card p-4">
             <Link href={row.href} className="block">
-              <p className="text-xs text-[#8A8A8A]">
+              <p className="text-xs text-[#8A8176]">
                 {row.topicLabel} · {row.difficulty}
                 {row.status === "in_progress" ? " · 未提交" : ""}
               </p>
               <p className="mt-1 font-semibold">{row.title}</p>
-              <p className="mt-2 text-sm text-[#6F6A63]">{row.score ? `听对 ${row.score}` : "还没交卷"}</p>
-              <p className="mt-2 text-xs text-[#8A8A8A]">{new Date(row.at).toLocaleString("zh-CN")}</p>
+              <p className="mt-2 text-sm text-[#6E675E]">{row.score ? `听对 ${row.score}` : "还没交卷"}</p>
+              <p className="mt-2 text-xs text-[#8A8176]">{new Date(row.at).toLocaleString("zh-CN")}</p>
             </Link>
             <button
               type="button"

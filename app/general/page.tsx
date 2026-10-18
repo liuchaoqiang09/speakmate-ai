@@ -42,17 +42,17 @@ export default function GeneralPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F3EE]">
+    <div className="min-h-screen ">
       <AppHeader />
     <main className="flex flex-col items-center px-5 py-10 sm:px-6 sm:py-14">
       <div className="ink-card w-full max-w-xl p-6 sm:p-8">
-        <p className="text-xs font-semibold tracking-[0.22em] text-[#0E7C66]">DAILY</p>
-        <h1 className="mt-3 text-[32px] font-semibold tracking-tight text-[#1C1917]">Daily speaking</h1>
-        <p className="mt-2 text-sm text-[#8A847C]">通用口语</p>
-        <p className="mt-3 text-sm leading-6 text-[#6F6A63]">选好主题、难度和反馈方式</p>
+        <p className="text-xs font-semibold tracking-[0.22em] text-[#1F3D36]">DAILY</p>
+        <h1 className="mt-3 text-[32px] font-semibold tracking-tight text-[#1C1712]">Daily speaking</h1>
+        <p className="mt-2 text-sm text-[#8A8176]">通用口语</p>
+        <p className="mt-3 text-sm leading-6 text-[#6E675E]">选好主题、难度和反馈方式</p>
 
         <fieldset className="mt-10">
-          <legend className="text-sm font-medium text-[#1C1917]">Topic <span className="font-normal text-[#8A847C]">主题</span></legend>
+          <legend className="text-sm font-medium text-[#1C1712]">Topic <span className="font-normal text-[#8A8176]">主题</span></legend>
           <div className="mt-3 flex flex-wrap gap-3">
             {TOPICS.map((item) => (
               <button
@@ -69,7 +69,7 @@ export default function GeneralPage() {
         </fieldset>
 
         <fieldset className="mt-8">
-          <legend className="text-sm font-medium text-[#1C1917]">Level <span className="font-normal text-[#8A847C]">难度</span></legend>
+          <legend className="text-sm font-medium text-[#1C1712]">Level <span className="font-normal text-[#8A8176]">难度</span></legend>
           <div className="mt-3 flex flex-wrap gap-3">
             {DIFFICULTIES.map((item) => (
               <button
@@ -86,7 +86,7 @@ export default function GeneralPage() {
         </fieldset>
 
         <fieldset className="mt-8">
-          <legend className="text-sm font-medium text-[#1C1917]">Feedback <span className="font-normal text-[#8A847C]">反馈</span></legend>
+          <legend className="text-sm font-medium text-[#1C1712]">Feedback <span className="font-normal text-[#8A8176]">反馈</span></legend>
           <div className="mt-3 flex flex-col gap-3">
             {FEEDBACK_OPTIONS.map((item) => (
               <button
@@ -103,16 +103,16 @@ export default function GeneralPage() {
         </fieldset>
 
         <div className="mt-12 flex flex-col gap-3 sm:flex-row">
-          <button type="button" className="ink-btn-line w-full flex-1" onClick={() => startWith("practice")}>
-            <span className="flex flex-col items-center leading-none">
+          <button type="button" className="ink-btn-line ink-pair w-full flex-1" onClick={() => startWith("practice")}>
+            <span className="ink-pair-copy">
               <span>Text dialogue</span>
-              <span className="mt-1 text-xs font-normal text-[#8A847C]">文本对话</span>
+              <span>文本对话</span>
             </span>
           </button>
-          <button type="button" className="ink-btn w-full flex-1" onClick={() => startWith("voice")}>
-            <span className="flex flex-col items-center leading-none">
+          <button type="button" className="ink-btn ink-pair w-full flex-1" onClick={() => startWith("voice")}>
+            <span className="ink-pair-copy">
               <span>Scene dialogue</span>
-              <span className="mt-1 text-xs font-normal text-white/75">场景对话</span>
+              <span>场景对话</span>
             </span>
           </button>
         </div>

@@ -101,12 +101,12 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F3EE]">
+    <div className="min-h-screen ">
       <AppHeader />
     <main className="mx-auto flex w-full max-w-3xl flex-col px-4 py-8 sm:px-6">
-      <p className="text-xs font-semibold tracking-[0.22em] text-[#0E7C66]">HISTORY</p>
+      <p className="text-xs font-semibold tracking-[0.22em] text-[#1F3D36]">HISTORY</p>
       <h1 className="mt-3 text-[32px] font-semibold tracking-tight">Practice history</h1>
-      <p className="mt-2 text-sm text-[#8A847C]">
+      <p className="mt-2 text-sm text-[#8A8176]">
         分数和总结保留 30 天，对话原文 5 天后自动清理。不需要的记录也可以立刻删掉。
       </p>
 
@@ -121,7 +121,7 @@ export default function HistoryPage() {
         </button>
       ) : null}
 
-      {loading ? <p className="mt-8 text-sm text-[#6F6F6F]">正在加载练习历史，请稍等。</p> : null}
+      {loading ? <p className="mt-8 text-sm text-[#6E675E]">正在加载练习历史，请稍等。</p> : null}
       {error ? (
         <p className="ink-alert mt-8" role="alert">
           {error}
@@ -129,23 +129,23 @@ export default function HistoryPage() {
       ) : null}
 
       {!loading && rows.length === 0 && !error ? (
-        <p className="mt-8 text-sm text-[#6F6A63]">还没有完成的练习。先开口练一轮。</p>
+        <p className="mt-8 text-sm text-[#6E675E]">还没有完成的练习。先开口练一轮。</p>
       ) : null}
 
       <ul className="mt-8 flex flex-col gap-3">
         {rows.map((row) => (
           <li key={row.id} className="ink-card p-4">
             <Link href={row.summaryHref} className="block">
-              <p className="text-xs text-[#8A8A8A]">
+              <p className="text-xs text-[#8A8176]">
                 {row.mode === "exam" ? "考试口语" : "日常口语"} · {row.topic || "对话"}
               </p>
               <p className="mt-1 font-semibold">
                 {row.score ? `参考分 ${row.score}` : "待查看总结"}
               </p>
               {row.nextFocus ? (
-                <p className="mt-2 text-sm text-[#6F6A63]">{row.nextFocus.zh || row.nextFocus.en}</p>
+                <p className="mt-2 text-sm text-[#6E675E]">{row.nextFocus.zh || row.nextFocus.en}</p>
               ) : null}
-              <p className="mt-2 text-xs text-[#8A8A8A]">
+              <p className="mt-2 text-xs text-[#8A8176]">
                 {row.durationSeconds ? `${row.durationSeconds} 秒 · ` : ""}
                 {new Date(row.endedAt).toLocaleString("zh-CN")}
               </p>

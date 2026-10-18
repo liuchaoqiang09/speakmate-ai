@@ -28,7 +28,7 @@ export function SpeechStatusLine({
 
   if (phase === "requesting") {
     return (
-      <p className="mb-3 text-sm text-[#6F6F6F]" role="status">
+      <p className="mb-3 text-sm text-[#6E675E]" role="status">
         Asking for the microphone
       </p>
     );
@@ -36,7 +36,7 @@ export function SpeechStatusLine({
 
   if (phase === "listening" || phase === "recognizing") {
     return (
-      <p className="mb-3 text-sm italic text-[#6F6F6F]" role="status">
+      <p className="mb-3 text-sm italic text-[#6E675E]" role="status">
         Listening
         {transcript ? <span className="mt-1 block text-[#111111] not-italic">{transcript}</span> : null}
       </p>

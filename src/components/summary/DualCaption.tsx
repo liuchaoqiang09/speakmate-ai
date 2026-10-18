@@ -11,8 +11,8 @@ type DualCaptionProps = {
 };
 
 /**
- * 总结页固定展示中英双字幕。已有中文直接显示，否则自动翻译。
- */
+  * 总结页固定展示中英双字幕。已有中文直接显示，否则自动翻译。
+  */
 export function DualCaption({
   english,
   chinese = "",
@@ -49,11 +49,11 @@ export function DualCaption({
 
   return (
     <div>
-      <p className={englishClassName || (strike ? "text-sm text-[#6F6F6F] line-through" : "text-sm leading-6")}>
+      <p className={englishClassName || (strike ? "text-sm text-[#6E675E] line-through" : "text-sm leading-6")}>
         {text}
       </p>
       {zh && zh !== text ? (
-        <p className="mt-1 text-sm leading-6 text-[#6F6F6F]">{zh}</p>
+        <p className="mt-1 text-sm leading-6 text-[#6E675E]">{zh}</p>
       ) : null}
     </div>
   );
